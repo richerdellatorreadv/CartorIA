@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analisador de Matrículas de Imóveis</title>
+<style>
+:root{
+  --p:#1b3a5c;--ph:#244d7a;--pl:#e8f0f8;
+  --ac:#b8922e;--al:#fdf6e8;
+  --bg:#f0f2f5;--cd:#fff;
+  --tx:#1a1f2e;--ts:#586070;--tm:#8a92a0;
+  --bd:#dde3ea;--bl:#edf0f3;
+  --ok:#1a7a45;--okb:#e8f5ee;--okr:#a8d5b8;
+  --wn:#8a5c00;--wnb:#fef8e8;--wnr:#e8c85a;
+  --er:#a32020;--erb:#fdeaea;--err:#f0b0b0;
+  --ib:#1b3a5c;--ibb:#e8f0f8;--ibr:#b8d0e8;
+  --inf:#5c1b5c;--infb:#f5e8f8;--infr:#d8a8e8;
+  --ctr:#1b3a5c;--con:#a32020;--ccn:#1a7a45;--car:#b8922e;--cad:#8a92a0;
+  --sh:0 2px 12px rgba(0,0,0,.08);--shl:0 8px 32px rgba(0,0,0,.14);
+  --r:12px;--rs:7px;--tr:.18s ease;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:15px;line-height:1.6}
+a{color:var(--p)}
+
+/* HEADER */
+.hdr{background:var(--p);color:#fff;padding:0 24px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,0,0,.22)}
+.hdr-i{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-ic{width:38px;height:38px;background:var(--ac);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.logo-tx{font-size:16px;font-weight:700;line-height:1.2}
+.logo-sx{font-size:11px;opacity:.65}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.prov-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.16);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.2)}
+.api-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);color:#fff;padding:7px 14px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background var(--tr);font-family:inherit}
+.api-btn:hover{background:rgba(255,255,255,.25)}
+.api-dot{width:8px;height:8px;border-radius:50%;background:#ff6b6b;flex-shrink:0;transition:background var(--tr)}
+.api-dot.ok{background:#51cf66}
+
+.main{max-width:1200px;margin:0 auto;padding:26px 22px 60px}
+.card{background:var(--cd);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--bl);overflow:hidden}
+.card-h{padding:15px 20px 13px;border-bottom:1px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
+.card-t{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
+.card-b{padding:20px}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.ov.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:var(--r);box-shadow:var(--shl);width:100%;max-width:560px;transform:translateY(16px);transition:transform .2s}
+.ov.open .modal{transform:translateY(0)}
+.modal-h{padding:17px 20px 13px;border-bottom:1px solid var(--bl);display:flex;align-items:center;justify-content:space-between}
+.modal-b{padding:20px;max-height:72vh;overflow-y:auto}
+.modal-f{padding:13px 20px;border-top:1px solid var(--bl);display:flex;gap:9px;justify-content:flex-end}
+
+/* FORMS */
+.fg{margin-bottom:13px}
+.fl{display:block;font-size:11.5px;font-weight:800;margin-bottom:5px;color:var(--ts);text-transform:uppercase;letter-spacing:.4px}
+.fi,.fs{width:100%;padding:9px 13px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13.5px;font-family:inherit;color:var(--tx);background:#fff;transition:border-color var(--tr)}
+.fi{font-family:monospace}
+.fi:focus,.fs:focus{outline:none;border-color:var(--p)}
+.fs{cursor:pointer}
+.fh{font-size:11.5px;color:var(--tm);margin-top:5px;line-height:1.5}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 17px;border-radius:var(--rs);font-size:13.5px;font-weight:700;cursor:pointer;border:none;transition:all var(--tr);font-family:inherit;white-space:nowrap}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--ph)}.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-g{background:transparent;color:var(--ts);border:1px solid var(--bd)}.btn-g:hover{background:var(--bg)}
+.btn-d{background:transparent;color:var(--er);border:1px solid var(--err)}.btn-d:hover{background:var(--erb)}
+.btn-lg{padding:12px 26px;font-size:14.5px}
+.btn.sm{padding:5px 12px;font-size:12px}
+
+/* ALERTS */
+.al{padding:11px 15px;border-radius:var(--rs);font-size:13px;display:flex;gap:9px;align-items:flex-start;margin-bottom:11px;line-height:1.5}
+.al-i{background:var(--ibb);color:var(--ib);border:1px solid var(--ibr)}
+.al-w{background:var(--wnb);color:var(--wn);border:1px solid var(--wnr)}
+.al-e{background:var(--erb);color:var(--er);border:1px solid var(--err)}
+.al-s{background:var(--okb);color:var(--ok);border:1px solid var(--okr)}
+.al-ic{flex-shrink:0;font-size:15px}
+.toast{position:fixed;top:76px;right:18px;z-index:999;max-width:380px;box-shadow:var(--shl);animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+
+/* PROVIDERS */
+.prov-card{border:1.5px solid var(--bd);border-radius:var(--rs);padding:14px;margin-bottom:10px;transition:border-color var(--tr)}
+.prov-card.active-p{border-color:var(--p);background:var(--pl)}
+.prov-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.prov-lbl{font-size:13px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:7px}
+.prov-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;text-transform:uppercase}
+.badge-p{background:var(--p);color:#fff}.badge-f{background:var(--ac);color:#fff}
+.prov-st{font-size:12px;color:var(--tm)}.prov-st.ok{color:var(--ok);font-weight:700}
+
+/* UPLOAD */
+.up-area{border:2px dashed var(--bd);border-radius:var(--r);padding:48px 24px;text-align:center;cursor:pointer;transition:all var(--tr);background:var(--bg);position:relative}
+.up-area:hover,.up-area.drag{border-color:var(--p);background:var(--pl)}
+.up-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.up-ic{font-size:48px;margin-bottom:10px}
+.files{display:flex;flex-direction:column;gap:7px;margin-top:13px}
+.fchip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--okb);border:1px solid var(--okr);border-radius:var(--rs)}
+.fchip-ic{font-size:20px}.fchip-i{flex:1}
+.fchip-n{font-weight:700;font-size:13.5px;color:var(--ok)}.fchip-s{font-size:11.5px;color:var(--tm)}
+.fchip-rm{background:none;border:none;cursor:pointer;color:var(--tm);font-size:17px;padding:3px;line-height:1}.fchip-rm:hover{color:var(--er)}
+
+/* LOADING */
+.ld-wrap{display:flex;flex-direction:column;align-items:center;padding:60px 24px;gap:20px}
+.spinner{width:48px;height:48px;border:4px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-tx{font-size:14px;font-weight:600;color:var(--ts)}
+.steps{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px}
+.step{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tm);opacity:.3;transition:opacity .4s,color .4s}
+.step.active{color:var(--p);opacity:1;font-weight:700}.step.done{color:var(--ok);opacity:1}
+
+/* DASHBOARD */
+.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:18px}
+@media(max-width:900px){.dash{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.dash{grid-template-columns:repeat(2,1fr)}}
+.dc{background:var(--cd);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--bl);padding:16px 17px;cursor:default}
+.dc.clickable{cursor:pointer;transition:box-shadow var(--tr)}.dc.clickable:hover{box-shadow:0 4px 18px rgba(0,0,0,.14)}
+.dc-lbl{font-size:10px;font-weight:800;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.dc-val{font-size:21px;font-weight:800;color:var(--tx);line-height:1.2;margin-bottom:2px}
+.dc-sub{font-size:11px;color:var(--ts);line-height:1.4}
+.dc-er{border-color:var(--err);background:var(--erb)}.dc-er .dc-val{color:var(--er)}.dc-er .dc-sub{color:var(--er);opacity:.85}
+.dc-wn{border-color:var(--wnr);background:var(--wnb)}.dc-ok{border-color:var(--okr);background:var(--okb)}
+.dc-ok .dc-val{color:var(--ok)}.dc-wn .dc-val{color:var(--wn)}
+.score-bar{height:6px;background:var(--bd);border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* SMART ALERTS */
+.smart-alerts{margin-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.sm-al{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--rs);font-size:13px;line-height:1.5}
+.sm-al.alto{background:var(--erb);color:var(--er);border:1px solid var(--err)}
+.sm-al.medio{background:var(--wnb);color:var(--wn);border:1px solid var(--wnr)}
+.sm-al.info{background:var(--ibb);color:var(--ib);border:1px solid var(--ibr)}
+.sm-al.inferencia{background:var(--infb);color:var(--inf);border:1px solid var(--infr)}
+.sm-src{font-size:10px;font-weight:800;opacity:.7;margin-left:4px}
+
+/* ACTION BAR / SEARCH */
+.act-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:9px}
+.act-l{display:flex;gap:7px;flex-wrap:wrap}
+.srch-wrap{position:relative;margin-bottom:16px}
+.srch-i{width:100%;padding:10px 40px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13.5px;font-family:inherit;color:var(--tx);background:#fff;transition:border-color var(--tr)}
+.srch-i:focus{outline:none;border-color:var(--p)}
+.srch-ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--tm);pointer-events:none}
+.srch-cl{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--tm);font-size:15px;display:none}
+.hl-row td,.hl-row{background:#fff9c4 !important}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--bl);margin-bottom:20px;overflow-x:auto}
+.tab{padding:12px 18px;font-size:13.5px;font-weight:700;color:var(--tm);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all var(--tr);display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:var(--p)}.tab.active{color:var(--p);border-bottom-color:var(--p)}
+.tab-bdg{background:var(--p);color:#fff;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:800}
+.tab-bdg.er{background:var(--er)}.tab-bdg.wn{background:var(--wn)}
+.tab-p{display:none}.tab-p.active{display:block}
+/* TIMELINE */
+.htl-box{background:var(--bg);border-radius:var(--rs);border:1px solid var(--bl);padding:18px 18px 13px;margin-bottom:20px}
+.htl-scroll{overflow-x:auto;padding-bottom:6px}
+.htl-inner{display:flex;align-items:flex-start;padding:6px 16px 0;position:relative;min-width:max-content}
+.htl-line{position:absolute;top:19px;left:16px;right:16px;height:2px;background:var(--bd)}
+.htl-item{display:flex;flex-direction:column;align-items:center;min-width:80px;cursor:pointer;position:relative;z-index:1;padding:0 5px;transition:transform .12s}
+.htl-item:hover{transform:translateY(-2px)}
+.htl-dw{display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin-bottom:7px;position:relative}
+.htl-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 2px var(--bd);transition:all .15s}
+.htl-item.active .htl-dot{width:20px;height:20px;box-shadow:0 0 0 3px rgba(0,0,0,.18)}
+.htl-alert-ring{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;border:2px solid #fff}
+.htl-alert-ring.er{background:var(--er)}.htl-alert-ring.wn{background:var(--wn)}
+.htl-ato{font-size:10px;font-weight:800;text-align:center;margin-bottom:1px}
+.htl-dt{font-size:9.5px;color:var(--tm);text-align:center;margin-bottom:2px}
+.htl-nat{font-size:9px;color:var(--ts);text-align:center;max-width:74px;line-height:1.3}
+.htl-tags{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;justify-content:center}
+.htl-tag{font-size:8.5px;padding:0 4px;border-radius:3px;font-weight:800}
+.htl-tag-ar{background:var(--al);color:var(--ac)}.htl-tag-on{background:var(--erb);color:var(--er)}
+.ev-tr .htl-dot{background:var(--ctr)}.ev-tr .htl-ato{color:var(--ctr)}
+.ev-on .htl-dot{background:var(--con)}.ev-on .htl-ato{color:var(--con)}
+.ev-cn .htl-dot{background:var(--ccn)}.ev-cn .htl-ato{color:var(--ccn)}
+.ev-ar .htl-dot{background:var(--car)}.ev-ar .htl-ato{color:var(--car)}
+.ev-ad .htl-dot{background:var(--cad)}.ev-ad .htl-ato{color:var(--cad)}
+.htl-legend{display:flex;flex-wrap:wrap;gap:13px;margin-top:13px;padding-top:11px;border-top:1px solid var(--bl);font-size:11px;color:var(--ts)}
+.leg-it{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* SNAPSHOT */
+.snap-empty{text-align:center;padding:48px 24px;color:var(--tm)}
+.snap-empty-ic{font-size:38px;margin-bottom:8px}
+.snap-view{display:flex;flex-direction:column;gap:16px}
+.snap-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.snap-badge{font-weight:800;font-size:13.5px;padding:4px 12px;border-radius:6px;color:#fff}
+.snap-nat{font-size:13.5px;color:var(--ts);font-weight:600}
+.snap-dt{font-size:12.5px;color:var(--tm)}
+.snap-summary{font-size:14px;line-height:1.6;color:var(--tx);background:var(--bg);padding:12px 14px;border-radius:var(--rs);border-left:3px solid var(--p)}
+.snap-sec{display:flex;flex-direction:column;gap:9px}
+.snap-sec-t{font-size:11px;font-weight:800;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.snap-nav{display:flex;gap:6px}
+.area-ev{border-radius:var(--rs);padding:15px}
+.area-ev.standard{background:var(--al);border:1px solid var(--wnr)}
+.area-ev.inferida{background:var(--infb);border:1px solid var(--infr)}
+.area-ev-t{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+.area-ev.standard .area-ev-t{color:var(--ac)}.area-ev.inferida .area-ev-t{color:var(--inf)}
+.area-diag{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.area-box{text-align:center;border:2px solid currentColor;border-radius:var(--rs);padding:10px 14px;min-width:90px}
+.area-box-v{font-size:17px;font-weight:800}.area-box-l{font-size:10.5px;opacity:.7;margin-top:1px}
+.area-arr{font-size:19px;color:var(--tm)}
+.area-desc{font-size:12px;color:var(--ts);line-height:1.5}
+.infer-label{font-size:11px;font-weight:800;color:var(--inf);background:var(--infb);padding:2px 8px;border-radius:10px;border:1px solid var(--infr)}
+.snap-ow-rows{display:flex;flex-direction:column;gap:7px}
+.snap-ow{display:flex;flex-direction:column;gap:5px;padding:10px 14px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bl)}
+.snap-ow-top{display:flex;align-items:center;gap:9px}
+.snap-ow-name{flex:1;font-size:13px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snap-ow-bw{flex:2;height:7px;background:var(--bd);border-radius:4px;overflow:hidden;min-width:60px}
+.snap-ow-bf{height:100%;border-radius:4px}
+.snap-ow-pct{font-size:12.5px;font-weight:800;white-space:nowrap;flex-shrink:0}
+.snap-ow-bottom{display:flex;align-items:center;gap:14px;padding-left:2px}
+.snap-ow-fr{font-size:11.5px;color:var(--ts);font-family:monospace;font-weight:600}
+.snap-ow-ar{font-size:12px;color:var(--ac);font-weight:700}
+.onus-list{display:flex;flex-direction:column;gap:6px}
+.onus-it{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:var(--rs);font-size:12.5px;line-height:1.5}
+.onus-it.hipoteca,.onus-it.penhora,.onus-it.alienacao_fiduciaria{background:var(--erb);color:var(--er);border:1px solid var(--err)}
+.onus-it.usufruto,.onus-it.servidao,.onus-it.outros{background:var(--wnb);color:var(--wn);border:1px solid var(--wnr)}
+.onus-none{font-size:13px;color:var(--tm);font-style:italic}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:var(--rs);border:1px solid var(--bl)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead tr{background:var(--bg)}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:800;color:var(--ts);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd)}
+td{padding:12px 14px;border-bottom:1px solid var(--bl);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg)}
+.idx{font-weight:800;color:var(--tm);font-size:12px}
+.ow-name{font-weight:700;font-size:13.5px}
+.ow-doc{font-size:11.5px;color:var(--tm);font-family:monospace;margin-top:2px}
+.ow-sub{font-size:11px;color:var(--tm);margin-top:2px}
+.pct-wrap{display:flex;align-items:center;gap:7px}
+.pct-bar{width:72px;height:6px;background:var(--bd);border-radius:3px;overflow:hidden;flex-shrink:0}
+.pct-fill{height:100%;border-radius:3px}
+.pct-n{font-weight:800;font-size:12.5px}
+.pct-sub{font-size:10px;color:var(--tm);font-weight:400;margin-top:2px;white-space:nowrap}
+.frac-b{font-weight:800;font-size:14px;color:var(--p)}
+.area-cell{font-size:12px;font-weight:700;color:var(--ac)}
+.calc-mark{color:var(--inf);font-size:9px;font-weight:400}
+.nat-tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:700;background:var(--pl);color:var(--p)}
+.nat-cell{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.ato-c{font-family:monospace;font-size:11.5px;background:var(--bg);padding:2px 7px;border-radius:4px;font-weight:700}
+.totals-row td{background:var(--bg);font-weight:800;border-top:2px solid var(--bd)}
+.totals-note{font-size:10px;color:var(--tm);font-weight:400}
+
+/* Casais colapsáveis */
+.group-row{cursor:pointer;user-select:none}
+.group-row td{background:var(--pl) !important;border-bottom:1px solid var(--bd) !important}
+.group-row:hover td{background:#dce7f2 !important}
+.group-row:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.group-row .ow-name{font-size:14.5px;color:var(--p);display:flex;align-items:center;gap:4px}
+.grp-caret{display:inline-block;width:14px;color:var(--p);font-size:12px;flex-shrink:0}
+.group-regime{font-size:11.5px;color:var(--ts);font-weight:400;margin-top:2px}
+tr.grp-hidden,tr.parc-hidden{display:none}
+.sub-row td{background:#fff;border-bottom:1px dashed var(--bd);padding-top:8px;padding-bottom:8px}
+.sub-row-name-cell{padding-left:36px !important}
+.ind-sub .ind-name-cell{padding-left:30px !important}
+.sub-ic{color:var(--tm);margin-right:6px}
+.inferred-row td{background:#faf8fc}
+.inferred-row .sub-ic{color:var(--inf)}
+.natureza-tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+.nat-proprio{background:var(--okb);color:var(--ok);border:1px solid var(--okr)}
+.nat-meacao{background:var(--infb);color:var(--inf);border:1px solid var(--infr)}
+.nat-misto{background:var(--al);color:var(--wn);border:1px solid var(--wnr)}
+.nat-indef{background:var(--bg);color:var(--tm);border:1px solid var(--bd)}
+.parc-tog{display:inline-block;margin-left:7px;font-size:10px;font-weight:700;color:var(--p);cursor:pointer;background:var(--pl);padding:1px 6px;border-radius:4px;user-select:none;vertical-align:middle}
+.parc-tog:hover{background:var(--p);color:#fff}
+.parc-detail td{background:#f8f9fb;padding-top:4px;padding-bottom:4px;font-size:11px;color:var(--ts);border-bottom:1px dashed var(--bl)}
+.parc-detail .ato-c{font-size:10.5px}
+
+/* HISTORY */
+.hist-list{display:flex;flex-direction:column}
+.hist-it{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--bl);align-items:flex-start}
+.hist-it:last-child{border-bottom:none}
+.hist-it.hl-row{background:#fff9c4 !important;padding-left:8px;padding-right:8px;border-radius:var(--rs)}
+.hist-side{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:50px;cursor:pointer}
+.hist-ato{font-size:10px;font-weight:800;padding:3px 5px;border-radius:5px;color:#fff;text-align:center;width:100%}
+.hist-date{font-size:9.5px;color:var(--tm);margin-top:4px;text-align:center;line-height:1.4}
+.hist-body{flex:1}
+.hist-nat{font-size:13px;font-weight:700;margin-bottom:2px}
+.hist-sum{font-size:12.5px;color:var(--ts);line-height:1.5}
+.hist-parties{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:5px;flex-wrap:wrap}
+.hist-party{font-weight:700}.hist-arr{color:var(--tm)}
+.hist-frac{background:var(--al);color:var(--ac);padding:1px 7px;border-radius:14px;font-size:11px;font-weight:800}
+.hist-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.tag-ar{background:var(--al);color:var(--ac);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.tag-on{background:var(--erb);color:var(--er);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.tag-cn{background:var(--okb);color:var(--ok);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.tag-inf{background:var(--infb);color:var(--inf);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* DIAGNOSTICS */
+.diag-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.diag-score-big{display:flex;align-items:center;gap:16px;flex:1}
+.score-circle{width:72px;height:72px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;border:4px solid currentColor}
+.score-circle .sc-num{font-size:22px;line-height:1}
+.score-circle .sc-den{font-size:10px;opacity:.7}
+.score-details{flex:1}
+.score-cat{font-size:15px;font-weight:800;margin-bottom:4px}
+.score-factors{font-size:12px;color:var(--ts);line-height:1.6}
+.diag-cats{display:flex;flex-direction:column;gap:14px}
+.diag-cat{border-radius:var(--rs);border:1px solid var(--bl);overflow:hidden}
+.diag-cat-h{padding:11px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--bg);font-weight:700;font-size:13.5px;user-select:none}
+.diag-cat-h:hover{background:var(--bl)}
+.diag-cat-b{padding:12px 15px;display:flex;flex-direction:column;gap:8px}
+.diag-item{padding:11px 14px;border-radius:var(--rs);font-size:13px;line-height:1.6;border-left:4px solid}
+.diag-item.er{background:var(--erb);border-color:var(--er);color:var(--er)}
+.diag-item.wn{background:var(--wnb);border-color:var(--wn);color:var(--wn)}
+.diag-item.ii{background:var(--ibb);border-color:var(--ib);color:var(--ib)}
+.diag-item.inf{background:var(--infb);border-color:var(--inf);color:var(--inf)}
+.diag-item-h{font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.diag-item-src{font-size:10px;font-weight:800;opacity:.6;font-family:monospace}
+.diag-item-body{font-weight:400;color:var(--tx);font-size:12.5px}
+.diag-item-calc{margin-top:8px;background:rgba(0,0,0,.04);border-radius:5px;padding:8px 10px;font-family:monospace;font-size:11.5px;white-space:pre-wrap;line-height:1.6}
+.diag-link{font-size:11px;cursor:pointer;text-decoration:underline;margin-top:4px;display:inline-block}
+.diag-empty{text-align:center;padding:40px;color:var(--tm);font-size:14px}
+
+/* PARECER */
+.parecer-box{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:16px;margin-top:16px}
+.parecer-hd{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.parecer-txt{font-family:monospace;font-size:12px;white-space:pre-wrap;line-height:1.7;color:var(--tx);max-height:400px;overflow-y:auto;border:1px solid var(--bd);background:#fff;border-radius:var(--rs);padding:14px}
+
+@media print{
+  .hdr,.act-bar,.btn,.ov,.toast,#uploadS,#loadingS,.srch-wrap,.htl-legend,.parc-tog,#grpCtl,.snap-nav{display:none !important}
+  .card{box-shadow:none;border:1px solid #ddd}.tab-p{display:block !important}.tabs{display:none !important}
+  tr.grp-hidden,tr.parc-hidden{display:table-row !important}
+  body{font-size:12px}
+}
+@media(max-width:640px){.main{padding:13px 11px 40px}.card-b{padding:13px}.htl-item{min-width:66px}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-i">
+    <div class="logo">
+      <div class="logo-ic">⚖️</div>
+      <div><div class="logo-tx">Analisador de Matrículas</div><div class="logo-sx">Cadeia Possessória com IA</div></div>
+    </div>
+    <div class="hdr-r">
+      <span class="prov-pill" id="provPill" style="display:none"></span>
+      <button class="api-btn" onclick="openModal()"><span class="api-dot" id="apiDot"></span><span id="apiLabel">Configurar IA</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="ov" id="modal" onclick="onOvClick(event)">
+  <div class="modal">
+    <div class="modal-h"><div class="card-t">⚙️ Configurar Provedores de IA</div><button class="btn btn-g" style="padding:3px 8px;font-size:15px" onclick="closeModal()">✕</button></div>
+    <div class="modal-b">
+      <div class="al al-i" style="margin-bottom:16px"><span class="al-ic">🔒</span><span>Suas chaves ficam salvas <strong>apenas no seu navegador</strong> — nunca passam por servidores desta aplicação.</span></div>
+      <div class="prov-card" id="card-oai">
+        <div class="prov-hd"><div class="prov-lbl">🟩 OpenAI <span class="prov-badge" style="background:#10a37f;color:#fff">Prioridade 1</span></div><span class="prov-st" id="oai-st">Não configurado</span></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl">API Key — OpenAI</label><input type="password" id="oaiKey" class="fi" placeholder="sk-proj-..." autocomplete="off"/><div class="fh">Acesso direto, estável. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></div></div>
+      </div>
+      <div class="prov-card" id="card-gem">
+        <div class="prov-hd"><div class="prov-lbl">🤖 Google Gemini <span class="prov-badge badge-p">Prioridade 2</span></div><span class="prov-st" id="gem-st">Não configurado</span></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl">API Key — Google AI Studio</label><input type="password" id="gemKey" class="fi" placeholder="Sua chave…" autocomplete="off"/><div class="fh">Gratuito · <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a> → "Create API key"</div></div>
+      </div>
+      <div class="prov-card" id="card-or">
+        <div class="prov-hd"><div class="prov-lbl">🔀 OpenRouter <span class="prov-badge badge-f">Prioridade 3 / Fallback</span></div><span class="prov-st" id="or-st">Não configurado</span></div>
+        <div class="fg" style="margin-bottom:8px"><label class="fl">API Key — OpenRouter</label><input type="password" id="orKey" class="fi" placeholder="sk-or-v1-…" autocomplete="off"/><div class="fh"><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></div></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl">Modelo OpenRouter</label>
+          <select id="orModel" class="fs">
+            <option value="qwen/qwen3-vl-235b-a22b-instruct">qwen/qwen3-vl-235b-a22b-instruct (Qwen 3 VL — Excelente)</option>
+            <option value="moonshotai/kimi-k3">moonshotai/kimi-k3 (Kimi K3 — Longo contexto)</option>
+            <option value="deepseek/deepseek-v4-flash-vision-exp">deepseek/deepseek-v4-flash-vision-exp (DeepSeek V4 Vision)</option>
+            <option value="google/gemini-3.8-flash">google/gemini-3.8-flash (Gemini via OpenRouter)</option>
+            <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
+            <option value="custom">✏️ Digitar manualmente…</option>
+          </select>
+          <input type="text" id="orModelCustom" class="fi" placeholder="provider/model-name" style="display:none;margin-top:7px;font-family:monospace"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-d" id="btnRm" onclick="removeKeys()" style="display:none;margin-right:auto">🗑 Remover tudo</button>
+      <button class="btn btn-g" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveKeys()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+  <div id="uploadS">
+    <div class="card">
+      <div class="card-h"><div class="card-t">📄 Upload da Matrícula</div><span style="font-size:12px;color:var(--tm)">PDF, JPG, PNG, WEBP · ou JSON de análise anterior</span></div>
+      <div class="card-b">
+        <div class="up-area" id="upArea">
+          <input type="file" id="fileInp" accept=".pdf,image/jpeg,image/png,image/webp,.json,application/json" multiple/>
+          <div class="up-ic">📂</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:5px">Arraste a matrícula aqui ou clique para selecionar</div>
+          <div style="font-size:13px;color:var(--tm)">PDF (múltiplas páginas), JPG, PNG ou WEBP · Máx. 20 MB<br/>Também aceita um <strong>.json</strong> exportado por este sistema (reabre sem consumir IA)</div>
+        </div>
+        <div class="files" id="filesList"></div>
+        <div style="margin-top:20px;display:flex;gap:11px;justify-content:flex-end;align-items:center">
+          <span style="font-size:13px;color:var(--tm)" id="upHint">Selecione um arquivo para continuar</span>
+          <button class="btn btn-p btn-lg" id="analyzeBtn" onclick="startAnalysis()" disabled>🔍 Analisar Matrícula</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-h"><div class="card-t" style="font-weight:600;color:var(--ts)">ℹ️ Como usar</div></div>
+      <div class="card-b" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
+        <div><div style="font-size:20px;margin-bottom:4px">🔑</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">1. Configure a IA</div><div style="font-size:12.5px;color:var(--tm)">Configure sua chave de API. OpenAI, Gemini ou OpenRouter — pelo menos um.</div></div>
+        <div><div style="font-size:20px;margin-bottom:4px">📄</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">2. Envie a matrícula</div><div style="font-size:12.5px;color:var(--tm)">PDF de múltiplas páginas ou imagens. A IA lê todos os atos.</div></div>
+        <div><div style="font-size:20px;margin-bottom:4px">🔬</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">3. Análise Crítica</div><div style="font-size:12.5px;color:var(--tm)">Veja o score de regularidade e os alertas de inconsistência na aba Diagnóstico.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingS" style="display:none">
+    <div class="card">
+      <div class="ld-wrap">
+        <div class="spinner"></div>
+        <div class="ld-tx" id="ldTx">Analisando a matrícula com IA…</div>
+        <div class="steps">
+          <div class="step" id="s1">📤 Enviando documento</div>
+          <div class="step" id="s2">🔍 Identificando atos registrais</div>
+          <div class="step" id="s3">👥 Mapeando cadeia possessória</div>
+          <div class="step" id="s4">📐 Calculando áreas e frações</div>
+          <div class="step" id="s5">⚠️ Verificando ônus e alertas</div>
+          <div class="step" id="s6">🔬 Executando análise crítica</div>
+          <div class="step" id="s7">✅ Estruturando resultado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsS" style="display:none">
+    <div class="dash" id="dash"></div>
+    <div id="smartAlerts"></div>
+
+    <div class="act-bar">
+      <div class="act-l">
+        <button class="btn btn-g" onclick="resetAnalysis()">⬅ Nova Análise</button>
+        <button class="btn btn-g" onclick="window.print()">🖨 Imprimir</button>
+        <button class="btn btn-g" onclick="copyAsText()">📋 Copiar Resumo</button>
+        <button class="btn btn-g" onclick="gerarParecer(true)">📄 Gerar Parecer</button>
+        <button class="btn btn-g" onclick="exportJSON()" title="Salva a análise para reabrir depois sem gastar IA">⬇ Exportar JSON</button>
+      </div>
+      <span style="font-size:11.5px;color:var(--tm)" id="analysisTs"></span>
+    </div>
+
+    <div class="srch-wrap">
+      <span class="srch-ic">🔍</span>
+      <input type="text" id="srchInp" class="srch-i" placeholder="Buscar pessoa em todos os atos…" oninput="onSearch(this.value)"/>
+      <button class="srch-cl" id="srchCl" onclick="clearSearch()">✕</button>
+    </div>
+
+    <div class="card">
+      <div class="card-b" style="padding-bottom:0">
+        <div class="tabs">
+          <div class="tab active" id="tab-donos" onclick="switchTab('donos')">👥 Proprietários <span class="tab-bdg" id="bdg-donos">0</span></div>
+          <div class="tab" id="tab-tl" onclick="switchTab('tl')">⏱️ Linha do Tempo <span class="tab-bdg" id="bdg-tl">0</span></div>
+          <div class="tab" id="tab-hist" onclick="switchTab('hist')">📋 Todos os Atos</div>
+          <div class="tab" id="tab-diag" onclick="switchTab('diag')">🔬 Diagnóstico <span class="tab-bdg er" id="bdg-diag" style="display:none">!</span></div>
+        </div>
+      </div>
+      <div class="card-b">
+
+        <div class="tab-p active" id="panel-donos">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:12px;color:var(--tm)" id="conjViewHint"></div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span id="grpCtl" style="display:none;gap:4px;align-items:center">
+                <button class="btn btn-g sm" onclick="setAllGroups(true)" title="Expandir todos os casais">⊞ Expandir</button>
+                <button class="btn btn-g sm" onclick="setAllGroups(false)" title="Recolher todos os casais">⊟ Recolher</button>
+                <span style="width:1px;height:18px;background:var(--bd);margin:0 4px"></span>
+              </span>
+              <button class="btn btn-g sm" id="btnViewGroup" onclick="setOwnerView('group')">👫 Agrupado</button>
+              <button class="btn btn-g sm" id="btnViewInd" onclick="setOwnerView('individual')">👤 Individual</button>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr id="ownersTh"></tr></thead><tbody id="ownersTb"></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-p" id="panel-tl">
+          <div class="htl-box">
+            <div class="htl-scroll"><div class="htl-inner" id="htlInner"><div class="htl-line"></div></div></div>
+            <div class="htl-legend">
+              <div class="leg-it"><div class="leg-dot" style="background:var(--ctr)"></div>Transmissão</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--con)"></div>Ônus</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--ccn)"></div>Cancelamento</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--car)"></div>Área/Desm.</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--cad)"></div>Averbação</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--er)"></div>Alerta crítico</div>
+              <div class="leg-it"><div class="leg-dot" style="background:var(--wn)"></div>Alerta/Inferência</div>
+            </div>
+          </div>
+          <div id="snapContent">
+            <div class="snap-empty"><div class="snap-empty-ic">👆</div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>
+          </div>
+        </div>
+
+        <div class="tab-p" id="panel-hist"><div class="hist-list" id="histList"></div></div>
+
+        <div class="tab-p" id="panel-diag">
+          <div class="diag-header">
+            <div class="diag-score-big" id="scoreBlock"></div>
+            <button class="btn btn-g" onclick="toggleParecer()">📄 Gerar Parecer</button>
+          </div>
+          <div id="parecerArea" style="display:none"></div>
+          <div class="diag-cats" id="diagCats"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer style="text-align:center;padding:20px;font-size:11.5px;color:var(--tm);border-top:1px solid var(--bl)">
+  Analisador de Matrículas · Powered by IA · Dados processados no seu navegador — nenhuma informação trafega por servidores desta aplicação
+</footer>
+<script>
+// ─── CONSTANTS & HELPERS ─────────────────────────────────────────────────────
+const COLORS=['#1b3a5c','#1a7a45','#8a4a00','#5c1b5c','#005c5c','#5c3a1b','#2d3a7a','#7a1b1b'];
+const K_GEM='gem_api_key',K_OR='or_api_key',K_MDL='or_model',K_OAI='oai_api_key';
+const GEO_FILTER=/georreferenci|remanescente|retifica[cç]/i;
+const SP_COL='#6b7a8d';
+const MASK='••••••••••••••••••••';
+let gFiles=[],stepTimer=null,gData=null,gDiag=[],gOwnerView='group',gActIdx=-1;
+
+const getGK=()=>localStorage.getItem(K_GEM)||'';
+const getOK=()=>localStorage.getItem(K_OR)||'';
+const getOAK=()=>localStorage.getItem(K_OAI)||'';
+const getMdl=()=>localStorage.getItem(K_MDL)||'qwen/qwen3-vl-235b-a22b-instruct';
+
+// Escape HTML (texto e atributos). Toda string vinda da IA passa por aqui.
+function h(s){if(s===null||s===undefined)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+const uniq=arr=>Array.from(new Set((arr||[]).filter(Boolean)));
+const firstName=s=>String(s||'').trim().split(/\s+/)[0]||'';
+function trunc(s,n){return s&&s.length>n?s.substring(0,n)+'…':(s||'');}
+function normName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();}
+function namesMatch(a,b){a=normName(a);b=normName(b);if(!a||!b||a.length<4||b.length<4)return false;return a===b||a.includes(b)||b.includes(a);}
+const normAto=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+function findActIdx(ato){const n=normAto(ato);if(!n||!gData)return-1;return(gData.cadeia_possessoria||[]).findIndex(a=>normAto(a.ato)===n);}
+function findAct(ato){const i=findActIdx(ato);return i>=0?gData.cadeia_possessoria[i]:null;}
+
+const REGIME_LBL={comunhao_parcial:'Comunhão Parcial de Bens',comunhao_universal:'Comunhão Universal de Bens',separacao_obrigatoria:'Separação Obrigatória',separacao_convencional:'Separação Convencional',participacao_final:'Participação Final nos Aquestos',desconhecido:'Regime não identificado'};
+const regimeLbl=r=>REGIME_LBL[r]||(r?String(r).replace(/_/g,' '):'Regime não informado');
+const AQ_LBL={compra_venda:'Compra e Venda',heranca:'Herança',doacao:'Doação',usucapiao:'Usucapião',adjudicacao:'Adjudicação',permuta:'Permuta',dacao_pagamento:'Dação em Pagamento',arrematacao:'Arrematação',partilha:'Partilha',incorporacao:'Incorporação',outro:'Outro'};
+function aqLabel(c){if(!c)return'';if(AQ_LBL[c])return AQ_LBL[c];return String(c).replace(/_/g,' ').replace(/\b\w/g,x=>x.toUpperCase());}
+// Rótulo de aquisição do titular (união das parcelas; fallback ao campo legado como_adquiriu)
+function ownerAcqLabel(m){
+  const l=uniq((m.parcelas||[]).map(p=>aqLabel(p.como_adquiriu)));
+  if(l.length)return l.length>2?l.slice(0,2).join(' + ')+` +${l.length-2}`:l.join(' + ');
+  return aqLabel(m.como_adquiriu)||'';
+}
+// "Adquiriu de" derivado da cadeia (transmitente dos atos citados nas parcelas / ato de referência)
+function adquiriuDe(m){
+  const atos=uniq([...(m.parcelas||[]).map(p=>p.ato_parcela),...String(m.ato_referencia||'').split(/[,;]/).map(s=>s.trim())]);
+  const names=uniq(atos.map(a=>findAct(a)?.transmitente));
+  return names.length?names.join('; '):(m.adquiriu_de||'');
+}
+// Motivo da (não) comunicação inferido pelas regras de regime — substitui campo que a IA preenchia
+function inferMotivo(p,owner){
+  const r=owner.regime_bens||'desconhecido';
+  const gratuito=['heranca','doacao'].includes(p.como_adquiriu);
+  if(r.startsWith('separacao'))return'Regime de separação de bens: não comunica';
+  if(r==='comunhao_universal')return p.comunica_conjuge?'Comunhão universal: comunica':'Cláusula de incomunicabilidade ou disposição expressa do ato';
+  if(p.comunica_conjuge)return'Aquisição onerosa na constância do casamento: comunica';
+  if(gratuito)return'Aquisição gratuita (herança/doação): não comunica';
+  if(r==='desconhecido')return'Regime não identificado: presunção de não comunicação';
+  return'Adquirido antes do casamento, sub-rogação ou disposição do ato: não comunica';
+}
+
+// ─── NÚMEROS / ÁREAS (formato pt-BR) ────────────────────────────────────────
+function parseNumBR(s){
+  if(s===null||s===undefined)return NaN;
+  if(typeof s==='number')return s;
+  let t=String(s).replace(/[^\d.,-]/g,'');
+  if(!t)return NaN;
+  if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');          // 1.019,8960 -> 1019.8960
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');       // 1.019.896 -> 1019896
+  return parseFloat(t);
+}
+const pctOf=v=>{const n=parseNumBR(v);return isNaN(n)?0:n;};
+function parseAreaToM2(str){
+  if(!str)return 0;
+  const sl=String(str).toLowerCase();
+  const num=parseNumBR(sl);
+  if(isNaN(num)||num<0)return 0;
+  if(/\d\s*ha\b|\bha\b|hectar/.test(sl))return num*10000;
+  if(/\bkm/.test(sl))return num*1e6;
+  return num;
+}
+function fmtArea(m2){
+  if(m2>=10000){const v=(m2/10000).toFixed(4).replace('.',',');return v+' ha';}
+  return m2.toFixed(2).replace('.',',')+' m²';
+}
+function parseDMY(s){if(!s)return null;const p=String(s).split('/');if(p.length<3)return null;const d=new Date(+p[2],+p[1]-1,+p[0]);return isNaN(d)?null:d;}
+function fmtFracao(fracao){
+  if(!fracao||typeof fracao!=='string')return fracao||'';
+  const parts=fracao.split('/');
+  if(parts.length===2){
+    const n=parseInt(parts[0].trim().replace(/\D/g,'')),d=parseInt(parts[1].trim().replace(/\D/g,''));
+    if(!isNaN(n)&&!isNaN(d))return n.toLocaleString('pt-BR')+'/'+d.toLocaleString('pt-BR');
+  }
+  return fracao;
+}
+function fmtPct(pct){
+  const n=pctOf(pct);
+  const trimmed=parseFloat(n.toFixed(4)).toString().replace('.',',');
+  const ci=trimmed.indexOf(',');
+  if(ci===-1)return trimmed+',00%';
+  const dec=trimmed.length-ci-1;
+  return dec<2?trimmed+'0'.repeat(2-dec)+'%':trimmed+'%';
+}
+
+// ─── PROVIDER UI ─────────────────────────────────────────────────────────────
+function saveKeys(){
+  const g=document.getElementById('gemKey').value.trim();
+  const o=document.getElementById('orKey').value.trim();
+  const oai=document.getElementById('oaiKey').value.trim();
+  const sel=document.getElementById('orModel').value;
+  const cust=document.getElementById('orModelCustom').value.trim();
+  const mdl=sel==='custom'?cust:sel;
+  if(g&&g!==MASK)localStorage.setItem(K_GEM,g);else if(!g)localStorage.removeItem(K_GEM);
+  if(o&&o!==MASK)localStorage.setItem(K_OR,o);else if(!o)localStorage.removeItem(K_OR);
+  if(oai&&oai!==MASK)localStorage.setItem(K_OAI,oai);else if(!oai)localStorage.removeItem(K_OAI);
+  if(mdl)localStorage.setItem(K_MDL,mdl);
+  if(!getGK()&&!getOK()&&!getOAK()){toast('Configure ao menos um provedor.','w');return;}
+  syncUI();closeModal();toast('Configurações salvas!','s');
+}
+function removeKeys(){
+  if(!confirm('Remover todas as chaves?'))return;
+  [K_GEM,K_OR,K_MDL,K_OAI].forEach(k=>localStorage.removeItem(k));
+  syncUI();closeModal();
+}
+function syncUI(){
+  const hG=!!getGK(),hO=!!getOK(),hOai=!!getOAK(),hA=hG||hO||hOai;
+  document.getElementById('apiDot').classList.toggle('ok',hA);
+  document.getElementById('apiLabel').textContent=hA?'⚙️ Provedores':'Configurar IA';
+  const pill=document.getElementById('provPill');
+  pill.style.display=hA?'':'none';
+  pill.textContent=hOai?'🟩 OpenAI':hG?'🤖 Gemini':'🔀 OpenRouter';
+  document.getElementById('btnRm').style.display=hA?'inline-flex':'none';
+  const setSt=(id,card,on)=>{const e=document.getElementById(id);if(!e)return;e.textContent=on?'✓ Configurado':'Não configurado';e.className='prov-st'+(on?' ok':'');document.getElementById(card).classList.toggle('active-p',on);};
+  setSt('gem-st','card-gem',hG);setSt('or-st','card-or',hO);setSt('oai-st','card-oai',hOai);
+}
+function openModal(){
+  document.getElementById('gemKey').value=getGK()?MASK:'';
+  document.getElementById('orKey').value=getOK()?MASK:'';
+  document.getElementById('oaiKey').value=getOAK()?MASK:'';
+  const mdl=getMdl(),sel=document.getElementById('orModel');
+  const opts=Array.from(sel.options).map(o=>o.value);
+  if(opts.includes(mdl)){sel.value=mdl;document.getElementById('orModelCustom').style.display='none';}
+  else{sel.value='custom';document.getElementById('orModelCustom').value=mdl;document.getElementById('orModelCustom').style.display='';}
+  syncUI();document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function onOvClick(e){if(e.target===document.getElementById('modal'))closeModal();}
+document.addEventListener('change',e=>{
+  if(e.target.id==='orModel')document.getElementById('orModelCustom').style.display=e.target.value==='custom'?'':'none';
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ─── FILE HANDLING ────────────────────────────────────────────────────────────
+const upArea=document.getElementById('upArea');
+const fileInp=document.getElementById('fileInp');
+upArea.addEventListener('dragover',e=>{e.preventDefault();upArea.classList.add('drag');});
+upArea.addEventListener('dragleave',()=>upArea.classList.remove('drag'));
+upArea.addEventListener('drop',e=>{e.preventDefault();upArea.classList.remove('drag');addFiles(Array.from(e.dataTransfer.files));});
+fileInp.addEventListener('change',e=>{addFiles(Array.from(e.target.files));fileInp.value='';});
+
+function addFiles(inc){
+  const ok=['application/pdf','image/jpeg','image/png','image/webp'],max=20*1024*1024;
+  for(const f of inc){
+    if(f.type==='application/json'||/\.json$/i.test(f.name)){importJSON(f);continue;}
+    if(!ok.includes(f.type)){toast(`"${h(f.name)}": tipo não suportado.`,'e');continue;}
+    if(f.size>max){toast(`"${h(f.name)}": maior que 20 MB.`,'e');continue;}
+    if(f.type==='application/pdf'){gFiles=[f];}else{if(gFiles.some(x=>x.type==='application/pdf'))gFiles=[];gFiles.push(f);}
+  }
+  renderFiles();
+}
+// Reabre uma análise exportada (⬇ Exportar JSON) sem consumir IA
+function importJSON(f){
+  f.text().then(t=>{
+    try{
+      const d=JSON.parse(t);
+      if(!d||typeof d!=='object'||(!d.proprietarios_atuais&&!d.cadeia_possessoria))throw new Error();
+      hide('uploadS');renderAll(d,'📂 JSON importado'+(d._meta?.provider?' (origem: '+d._meta.provider+')':''));
+    }catch{toast('JSON inválido ou não reconhecido.','e');}
+  });
+}
+function removeFile(i){gFiles.splice(i,1);renderFiles();}
+function renderFiles(){
+  document.getElementById('filesList').innerHTML=gFiles.map((f,i)=>`
+    <div class="fchip"><span class="fchip-ic">${f.type==='application/pdf'?'📄':'🖼️'}</span>
+    <div class="fchip-i"><div class="fchip-n">${h(f.name)}</div><div class="fchip-s">${fmtSz(f.size)}</div></div>
+    <button class="fchip-rm" onclick="removeFile(${i})">✕</button></div>`).join('');
+  document.getElementById('analyzeBtn').disabled=gFiles.length===0;
+  document.getElementById('upHint').textContent=gFiles.length?`${gFiles.length} arquivo(s) selecionado(s)`:'Selecione um arquivo para continuar';
+}
+function fmtSz(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+// ─── ANALYSIS FLOW ────────────────────────────────────────────────────────────
+async function startAnalysis(){
+  const gk=getGK(),ok=getOK(),oak=getOAK();
+  if(!gk&&!ok&&!oak){openModal();toast('Configure ao menos um provedor.','w');return;}
+  if(!gFiles.length)return;
+  show('loadingS');hide('uploadS');hide('resultsS');runSteps();
+
+  // Prioridade: OpenAI -> Gemini -> OpenRouter
+  if(oak){
+    try{const content=await buildORContent();const res=await callOpenAI(oak,content);renderAll(res,'🟩 OpenAI (gpt-4o)');return;}
+    catch(err){
+      if(!gk&&!ok){failBack(`OpenAI: ${err.message}`);return;}
+      toast(`OpenAI: ${h(err.message)} — tentando próximo…`,'w');
+    }
+  }
+  if(gk){
+    try{const parts=await buildGParts();const res=await callGemini(gk,parts);renderAll(res,'🤖 Gemini');return;}
+    catch(err){
+      const ol=/alta demanda|429|503/.test(err.message);
+      if(!ok){failBack(err.message);return;}
+      toast(ol?'⚡ Gemini sobrecarregado — tentando OpenRouter…':`Gemini: ${h(err.message)} — tentando OpenRouter…`,'w');
+    }
+  }
+  if(ok){
+    try{const content=await buildORContent();const res=await callOR(ok,getMdl(),content);renderAll(res,`🔀 ${getMdl().split('/').pop()}`);}
+    catch(err){failBack(`OpenRouter: ${err.message}`);}
+  }
+}
+function failBack(msg){if(stepTimer)clearInterval(stepTimer);hide('loadingS');show('uploadS');toast(h(msg),'e');}
+
+async function buildGParts(){
+  const parts=[];
+  for(const f of gFiles){const b64=await toB64(f);parts.push({inline_data:{mime_type:f.type,data:b64}});}
+  parts.push({text:PROMPT});return parts;
+}
+async function buildORContent(){
+  const content=[];
+  for(const f of gFiles){
+    if(f.type==='application/pdf'){const imgs=await pdfToImgs(f);for(const img of imgs)content.push({type:'image_url',image_url:{url:`data:image/jpeg;base64,${img}`}});}
+    else{const b64=await toB64(f);content.push({type:'image_url',image_url:{url:`data:${f.type};base64,${b64}`}});}
+  }
+  content.push({type:'text',text:PROMPT});return content;
+}
+async function pdfToImgs(file){
+  try{
+    const{getDocument,GlobalWorkerOptions}=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+    GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+    const buf=await file.arrayBuffer(),pdf=await getDocument({data:buf}).promise,imgs=[];
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i),vp=pg.getViewport({scale:1.25}),cv=document.createElement('canvas');
+      cv.width=vp.width;cv.height=vp.height;
+      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      imgs.push(cv.toDataURL('image/jpeg',.70).split(',')[1]);
+    }
+    return imgs;
+  }catch(e){throw new Error('Não foi possível converter o PDF. Tente como imagem.');}
+}
+function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+
+// fetch com timeout (3 min) — compartilhado por todos os provedores
+async function fetchT(url,opts,label){
+  const ctrl=new AbortController();const tmr=setTimeout(()=>ctrl.abort(),180000);
+  try{return await fetch(url,{...opts,signal:ctrl.signal});}
+  catch(e){if(e.name==='AbortError')throw new Error(`Timeout (3 min)${label?' — '+label:''}.`);throw new Error(`Rede: ${e.message}`);}
+  finally{clearTimeout(tmr);}
+}
+// Limpa fences/markdown, isola o objeto JSON e tenta recuperar se foi cortado
+function parseModelJSON(t,finishReason,provider){
+  t=String(t).trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+  const js=t.indexOf('{'),je=t.lastIndexOf('}');if(js!==-1&&je>js)t=t.substring(js,je+1);
+  try{return JSON.parse(t);}catch{
+    const cut=finishReason==='length'||finishReason==='MAX_TOKENS';
+    if(cut){
+      toast('⚠️ Resposta cortada — recuperando dados parciais…','w');
+      const rec=tryRecoverJSON(t);if(rec)return rec;
+      throw new Error(`${provider}: JSON cortado irrecuperável. Tente PDF menor ou modelo com mais contexto.`);
+    }
+    console.error('[parseModelJSON]',provider,t.substring(0,2000));
+    throw new Error(`${provider} retornou formato JSON inválido. Verifique o console (F12).`);
+  }
+}
+
+async function callOpenAI(key,content){
+  const res=await fetchT('https://api.openai.com/v1/chat/completions',{method:'POST',
+    headers:{'Content-Type':'application/json',Authorization:`Bearer ${key}`},
+    body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content}],temperature:0.1,response_format:{type:'json_object'}})},'OpenAI');
+  if(!res.ok){let m=`HTTP ${res.status}`;try{const e=await res.json();m=e?.error?.message||m;}catch{}if(res.status===402)throw new Error('Sem créditos na OpenAI.');throw new Error(m);}
+  const data=await res.json();const t=data?.choices?.[0]?.message?.content;
+  if(!t)throw new Error('Resposta inesperada da OpenAI.');
+  return parseModelJSON(t,data?.choices?.[0]?.finish_reason,'OpenAI');
+}
+async function callGemini(key,parts){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(key)}`;
+  const res=await fetchT(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0.1,maxOutputTokens:65536,responseMimeType:'application/json'}})},'Gemini');
+  if(!res.ok){const e=await res.json().catch(()=>({})),m=e?.error?.message||`HTTP ${res.status}`;
+    if(res.status===401||res.status===403)throw new Error('API Key do Gemini inválida.');
+    if(res.status===429)throw new Error('alta demanda 429');
+    if(res.status===503||m.toLowerCase().includes('high demand'))throw new Error('alta demanda 503');
+    throw new Error(m);}
+  const data=await res.json();
+  const t=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+  const finishReason=data?.candidates?.[0]?.finishReason;
+  if(!t)throw new Error(`Gemini sem texto. finishReason: ${finishReason||'?'}`);
+  return parseModelJSON(t,finishReason,'Gemini');
+}
+async function callOR(key,model,content){
+  const res=await fetchT('https://openrouter.ai/api/v1/chat/completions',{method:'POST',
+    headers:{'Content-Type':'application/json',Authorization:`Bearer ${key}`,'HTTP-Referer':location.href,'X-Title':'Analisador de Matrículas'},
+    body:JSON.stringify({model,messages:[
+      {role:'system',content:'You are a Brazilian real estate registry expert. Respond ONLY with a single valid JSON object, no markdown, no explanation. Be concise in text fields.'},
+      {role:'user',content}],temperature:0.1})},'OpenRouter');
+  if(!res.ok){let m=`HTTP ${res.status}`;try{const e=await res.json();m=e?.error?.message||m;}catch{}
+    if(res.status===401||res.status===403)throw new Error('API Key do OpenRouter inválida.');
+    if(res.status===404)throw new Error(`Modelo "${model}" não encontrado. Tente outro.`);
+    throw new Error(m);}
+  const data=await res.json();
+  if(data?.error)throw new Error(data.error.message||JSON.stringify(data.error));
+  const t=data?.choices?.[0]?.message?.content;
+  const finishReason=data?.choices?.[0]?.finish_reason;
+  if(!t)throw new Error(`OpenRouter sem texto. finish_reason: ${finishReason||'?'}`);
+  return parseModelJSON(t,finishReason,'OpenRouter');
+}
+function tryRecoverJSON(partial){
+  try{
+    let s=partial.replace(/,\s*$/,'');
+    let braces=0,brackets=0,inStr=false,escp=false;
+    for(let i=0;i<s.length;i++){
+      const c=s[i];if(escp){escp=false;continue;}if(c==='\\'&&inStr){escp=true;continue;}
+      if(c==='"'){inStr=!inStr;continue;}if(inStr)continue;
+      if(c==='{')braces++;else if(c==='}')braces--;else if(c==='[')brackets++;else if(c===']')brackets--;
+    }
+    if(inStr)s+='"';s=s.replace(/,\s*$/,'');
+    while(brackets>0){s+=']';brackets--;}while(braces>0){s+='}';braces--;}
+    return JSON.parse(s);
+  }catch{return null;}
+}
+
+function runSteps(){
+  const ids=['s1','s2','s3','s4','s5','s6','s7'];
+  ids.forEach(id=>{const e=document.getElementById(id);e.classList.remove('active','done');});
+  document.getElementById(ids[0]).classList.add('active');let cur=0;
+  if(stepTimer)clearInterval(stepTimer);
+  stepTimer=setInterval(()=>{
+    if(cur<ids.length-1){document.getElementById(ids[cur]).classList.replace('active','done');cur++;document.getElementById(ids[cur]).classList.add('active');}
+    else clearInterval(stepTimer);
+  },1800);
+}
+
+// ─── SANEAMENTO DOS DADOS DA IA ──────────────────────────────────────────────
+function cleanData(d){
+  d.imovel=d.imovel||{};
+  d.alertas=Array.isArray(d.alertas)?d.alertas.filter(Boolean):[];
+  d.cadeia_possessoria=Array.isArray(d.cadeia_possessoria)?d.cadeia_possessoria.filter(Boolean):[];
+  d.proprietarios_atuais=(Array.isArray(d.proprietarios_atuais)?d.proprietarios_atuais:[])
+    .filter(o=>o&&o.nome&&!GEO_FILTER.test(o.nome));   // remove alucinações tipo "Remanescente Georreferenciamento"
+  d.proprietarios_atuais.forEach(o=>{
+    o.parcelas=Array.isArray(o.parcelas)?o.parcelas.filter(Boolean):[];
+    if(o.conjuge!==null&&o.conjuge!==undefined&&typeof o.conjuge!=='string')o.conjuge=String(o.conjuge);
+    if(o.conjuge&&/^(null|none|n\/a|-|—|nao consta|não consta)$/i.test(o.conjuge.trim()))o.conjuge=null;
+    if(o.regime_bens&&typeof o.regime_bens==='string')o.regime_bens=o.regime_bens.toLowerCase().trim();
+  });
+  d.cadeia_possessoria.forEach(a=>{
+    a.snapshot_proprietarios=Array.isArray(a.snapshot_proprietarios)?a.snapshot_proprietarios.filter(Boolean):[];
+    a.onus_ativos=Array.isArray(a.onus_ativos)?a.onus_ativos.filter(Boolean):[];
+  });
+  return d;
+}
+// ─── OFFLINE VERIFICATION ENGINE ─────────────────────────────────────────────
+function runOfflineVerification(data){
+  const items=[];
+  const chain=data.cadeia_possessoria||[];
+  const owners=data.proprietarios_atuais||[];
+  const im=data.imovel||{};
+
+  // 1. Soma das frações dos proprietários atuais
+  const totalPct=owners.reduce((s,o)=>s+pctOf(o.percentual),0);
+  if(owners.length&&Math.abs(totalPct-100)>0.5){
+    items.push({cat:'propriedade',sev:'er',ato:null,src:'⚙️ Sistema',
+      titulo:'Soma das frações ≠ 100%',
+      corpo:`Os proprietários atuais totalizam ${totalPct.toFixed(2)}% (esperado: 100%). Possível erro de lançamento ou fração não registrada.`,
+      calc:owners.map(o=>`${o.nome||'?'}: ${o.fracao||'?'} = ${pctOf(o.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${totalPct.toFixed(2)}%`
+    });
+  }
+
+  // 1b. Parcelas não fecham com o percentual do proprietário
+  for(const o of owners){
+    if(!o.parcelas.length)continue;
+    const sp=o.parcelas.reduce((s,p)=>s+pctOf(p.percentual_parcela),0),op=pctOf(o.percentual);
+    if(op>0&&Math.abs(sp-op)>0.5){
+      items.push({cat:'propriedade',sev:'wn',ato:o.ato_referencia||null,src:'⚙️ Sistema',
+        titulo:`Parcelas de ${o.nome} não fecham com a fração total`,
+        corpo:`As parcelas somam ${sp.toFixed(2)}% mas o percentual declarado é ${op.toFixed(2)}%. O cálculo de meação foi normalizado proporcionalmente; conferir a decomposição das aquisições.`,
+        calc:o.parcelas.map(p=>`${p.ato_parcela||'?'} ${aqLabel(p.como_adquiriu)}: ${pctOf(p.percentual_parcela).toFixed(2)}%`).join('\n')+`\nSOMA: ${sp.toFixed(2)}% · DECLARADO: ${op.toFixed(2)}%`
+      });
+    }
+  }
+
+  // 2. Área × fração inconsistente nos proprietários atuais
+  const areaAtualStr=im.area_atual||im.area_original||'';
+  const areaAtualNum=parseAreaToM2(areaAtualStr);
+  if(areaAtualNum>0){
+    for(const o of owners){
+      const areaOwner=parseAreaToM2(o.area_correspondente||'');
+      const pct=pctOf(o.percentual);
+      if(areaOwner>0&&pct>0){
+        const esperado=areaAtualNum*(pct/100);
+        const diff=Math.abs(areaOwner-esperado)/esperado;
+        if(diff>0.05){
+          items.push({cat:'area',sev:'er',ato:o.ato_referencia,src:'⚙️ Sistema',
+            titulo:`Área de ${o.nome||'?'} inconsistente com a fração`,
+            corpo:`A fração ${o.fracao||pct+'%'} de uma área de ${areaAtualStr} deveria corresponder a ~${fmtArea(esperado)}, mas consta ${o.area_correspondente}.`,
+            calc:`Área total: ${areaAtualStr} = ${fmtArea(areaAtualNum)}\nFração: ${pct}% → esperado: ${fmtArea(esperado)}\nDeclarado: ${o.area_correspondente} (diferença: ${(diff*100).toFixed(1)}%)`
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Verificações por ato
+  for(let i=0;i<chain.length;i++){
+    const act=chain[i];
+    const snap=act.snapshot_proprietarios||[];
+
+    // 3a. Soma do snapshot ≠ 100%
+    if(snap.length>0){
+      const snapTotal=snap.reduce((s,p)=>s+pctOf(p.percentual),0);
+      if(Math.abs(snapTotal-100)>0.5){
+        items.push({cat:'propriedade',sev:'er',ato:act.ato,src:'⚙️ Sistema',
+          titulo:`Snapshot de ${act.ato}: soma das frações ≠ 100%`,
+          corpo:`Logo após ${act.ato}, os proprietários totalizam ${snapTotal.toFixed(2)}% — impossível juridicamente.`,
+          calc:snap.map(p=>`${p.nome||'?'}: ${pctOf(p.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${snapTotal.toFixed(2)}%`
+        });
+      }
+    }
+
+    // 3b. Georreferenciamento / Retificação com condôminos — inferência proporcional
+    const nat=(act.natureza||'').toLowerCase();
+    const evTipo=act.evento_area?.tipo||'';
+    const isGeoRet=/georreferenci|retifica[cç]/.test(nat)||['georreferenciamento','retificacao'].includes(evTipo);
+    const redistEspecificada=act.evento_area&&act.evento_area.redistribuicao_especificada===true;
+    if(isGeoRet&&act.evento_area&&snap.length>1&&!redistEspecificada){
+      const antes=parseAreaToM2(act.evento_area.area_antes||'');
+      const depois=parseAreaToM2(act.evento_area.area_depois||'');
+      if(antes>0&&depois>0&&Math.abs(antes-depois)/antes>0.001){
+        const delta=depois-antes,pctVar=(delta/antes)*100,sinal=delta>0?'+':'';
+        let calc=`Área antes: ${act.evento_area.area_antes} → Área depois: ${act.evento_area.area_depois}\nVariação: ${sinal}${fmtArea(delta)} (${sinal}${pctVar.toFixed(4)}%)\n\nDistribuição inferida (proporcional):\n`;
+        snap.forEach(p=>{
+          const pp=pctOf(p.percentual),varOwner=delta*(pp/100),areaAntes=antes*(pp/100);
+          calc+=`${p.nome||'?'} (${fmtPct(pp)}): ${fmtArea(areaAntes)} → ${fmtArea(areaAntes+varOwner)} (${sinal}${fmtArea(varOwner)})\n`;
+        });
+        const absDelta=Math.abs(delta/antes);
+        const rotulo=/retifica/.test(nat)||evTipo==='retificacao'?'Retificação':'Georreferenciamento';
+        const grande=absDelta>0.05;
+        items.push({cat:'area',sev:grande?'er':'wn',ato:act.ato,src:'🔍 Inferência',inferencia:true,calc,
+          titulo:grande?`${act.ato}: ${rotulo} com variação acima do limite legal (${Math.abs(pctVar).toFixed(2)}% > 5%)`:`${act.ato}: ${rotulo} alterou a área — distribuição não especificada`,
+          corpo:grande?`Variação de ${Math.abs(pctVar).toFixed(2)}% na área. Retificações unilaterais admitem até 5%. O sistema inferiu distribuição proporcional entre os condôminos pois o ato não especificou.`
+                      :`O ato alterou a área sem especificar a redistribuição entre os ${snap.length} condôminos. O sistema inferiu distribuição proporcional à fração preexistente. Verificar se há instrumento complementar.`
+        });
+      }
+    }
+
+    // 3c. Retificação > 5% (quando não coberta pela inferência acima)
+    if(evTipo==='retificacao'&&(snap.length<=1||redistEspecificada)){
+      const ab=parseAreaToM2(act.evento_area.area_antes||''),dp=parseAreaToM2(act.evento_area.area_depois||'');
+      if(ab>0&&dp>0){
+        const diff=Math.abs(dp-ab)/ab;
+        if(diff>0.05){
+          items.push({cat:'area',sev:'er',ato:act.ato,src:'⚙️ Sistema',
+            titulo:`${act.ato}: Retificação de área acima do limite legal (${(diff*100).toFixed(1)}% > 5%)`,
+            corpo:`Variação de ${(diff*100).toFixed(1)}% excede o limite de 5% para retificações unilaterais (Lei 10.267/2001). Exige anuência dos confrontantes ou processo judicial/administrativo.`,
+            calc:`Antes: ${act.evento_area.area_antes}\nDepois: ${act.evento_area.area_depois}\nVariação: ${(diff*100).toFixed(1)}%\nLimite legal: 5%`
+          });
+        }
+      }
+    }
+
+    // 3d. Ônus sem fração especificada com condôminos
+    for(const on of (act.onus_ativos||[])){
+      if(!on||!on.descricao)continue;
+      const descL=((on.descricao||'')+' '+(on.fracao_atingida||'')).toLowerCase();
+      const temFracao=/fra[çc][aã]o|parte|%|\d\s*\/\s*\d|metade|quota|cota|integral|totalidade/.test(descL);
+      if(!temFracao&&snap.length>1&&['hipoteca','penhora','alienacao_fiduciaria'].includes(on.tipo)){
+        const tl=on.tipo.replace(/_/g,' ');
+        items.push({cat:'onus',sev:'er',ato:act.ato,src:'🔍 Inferência',inferencia:true,
+          titulo:`${act.ato}: ${tl} sem fração especificada — condôminos existentes`,
+          corpo:`O ato de ${tl} não especifica a fração atingida. Há ${snap.length} condôminos. Verificar se o ônus recai sobre a fração do devedor ou sobre a totalidade (o que exigiria anuência dos demais).`,
+          calc:`Credora/Beneficiária: ${on.credor_beneficiario||'não informado'}\nCondôminos no momento:\n`+snap.map(p=>`${p.nome}: ${p.fracao||pctOf(p.percentual)+'%'}`).join('\n')
+        });
+      }
+    }
+
+    // 3e. Lacuna temporal > 15 anos
+    if(i>0&&act.data&&chain[i-1].data){
+      const d1=parseDMY(chain[i-1].data),d2=parseDMY(act.data);
+      if(d1&&d2){const anos=(d2-d1)/(1000*60*60*24*365.25);
+        if(anos>15)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'⚙️ Sistema',
+          titulo:`Lacuna de ${Math.floor(anos)} anos entre ${chain[i-1].ato} e ${act.ato}`,
+          corpo:`Intervalo de ${Math.floor(anos)} anos sem atos registrados. Verificar se há atos não constantes na certidão ou se houve período sem movimentação.`,
+          calc:`${chain[i-1].ato}: ${chain[i-1].data}\n${act.ato}: ${act.data}\nDiferença: ${Math.floor(anos)} anos`
+        });
+        if(anos<0)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'⚙️ Sistema',
+          titulo:`${act.ato} datado antes de ${chain[i-1].ato}`,
+          corpo:`A data de ${act.ato} (${act.data}) é anterior à do ato precedente (${chain[i-1].data}). Possível erro de leitura da IA ou de lançamento.`,calc:null});
+      }
+    }
+  }
+
+  // 4. Área atual ≠ área original sem evento de área
+  const areaOrigStr=im.area_original||'',areaOrigNum=parseAreaToM2(areaOrigStr);
+  if(areaOrigNum>0&&areaAtualNum>0&&Math.abs(areaAtualNum-areaOrigNum)>1&&!chain.some(a=>a.evento_area)){
+    items.push({cat:'area',sev:'er',ato:null,src:'⚙️ Sistema',
+      titulo:'Área mudou sem ato de retificação/desmembramento identificado',
+      corpo:`Área original: ${areaOrigStr} → Área atual: ${areaAtualStr}. Nenhum ato de desmembramento, remembramento ou retificação foi encontrado na cadeia. Possível omissão na certidão ou erro de lançamento.`,
+      calc:`Área original: ${areaOrigStr}\nÁrea atual: ${areaAtualStr}\nDiferença: ${fmtArea(areaAtualNum-areaOrigNum)}`
+    });
+  }
+
+  // 5. Ônus vigentes no último ato (estado final) sem alerta da IA
+  const last=chain[chain.length-1];
+  const onusFinais=(last?.onus_ativos||[]).filter(o=>o&&o.tipo);
+  const iaTemOnus=(data.alertas||[]).some(a=>a.tipo==='onus_vigente');
+  if(onusFinais.length&&!iaTemOnus){
+    items.push({cat:'onus',sev:'er',ato:last.ato,src:'⚙️ Sistema',
+      titulo:`${onusFinais.length} ônus vigente(s) após o último ato`,
+      corpo:onusFinais.map(o=>`${o.tipo.replace(/_/g,' ')}${o.credor_beneficiario?' — '+o.credor_beneficiario:''}`).join('; ')+'.',calc:null});
+  }
+
+  // 6. Fusionar com alertas da IA
+  const iaAlertas=(data.alertas||[]).map(a=>({
+    cat:mapAlertaToCat(a.tipo),sev:mapCriticidadeToSev(a.criticidade),
+    ato:extractAto(a.descricao,chain),src:'🧠 IA',
+    titulo:mapAlertaTitulo(a.tipo),corpo:a.descricao||'',calc:null
+  }));
+  return [...iaAlertas,...items];
+}
+// Extrai "R-3" / "Av-12" da descrição do alerta da IA para ligá-lo à linha do tempo
+function extractAto(desc,chain){
+  const m=String(desc||'').match(/\b(R|AV|M)[\s.-]?(\d{1,3})\b/i);
+  if(!m)return null;
+  const cand=normAto(`${m[1]}-${m[2]}`);
+  const act=(chain||[]).find(a=>normAto(a.ato)===cand);
+  return act?act.ato:null;
+}
+function mapAlertaToCat(tipo){
+  if(['onus_vigente','hipoteca_sem_fracao','penhora_sem_extensao'].includes(tipo))return'onus';
+  if(tipo==='lacuna_temporal')return'temporal';
+  if(['soma_incorreta','meacao_presumida','heranca_sem_quinhao'].includes(tipo))return'propriedade';
+  if(tipo==='area_inconsistente'||tipo==='desmembramento_identificado')return'area';
+  return'juridico';
+}
+function mapCriticidadeToSev(c){return c==='alto'?'er':c==='medio'?'wn':'ii';}
+function mapAlertaTitulo(tipo){
+  return{onus_vigente:'Ônus vigente identificado',lacuna_temporal:'Lacuna temporal',soma_incorreta:'Soma de frações incorreta',
+    area_inconsistente:'Inconsistência de área',proprietario_sem_cpf:'Proprietário sem CPF',desmembramento_identificado:'Desmembramento identificado',
+    meacao_presumida:'Meação presumida no casamento',hipoteca_sem_fracao:'Hipoteca sem fração especificada',heranca_sem_quinhao:'Herança sem quinhão definido',
+    penhora_sem_extensao:'Penhora sem extensão definida'}[tipo]||(tipo?String(tipo).replace(/_/g,' '):'Alerta');
+}
+
+// ─── CONTINUITY ENGINE ────────────────────────────────────────────────────────
+// Propaga a área vigente ato a ato e calcula a área de cada condômino (a IA não envia mais áreas no snapshot).
+function applyContinuity(data){
+  if(!data)return;
+  const im=data.imovel||{};
+  let curM2=parseAreaToM2(im.area_original||'');
+  (data.cadeia_possessoria||[]).forEach(act=>{
+    if(act.evento_area&&act.evento_area.area_depois){const n=parseAreaToM2(act.evento_area.area_depois);if(n>0)curM2=n;}
+    else if(act.area_remanescente){const n=parseAreaToM2(act.area_remanescente);if(n>0)curM2=n;}
+    act._area_m2=curM2;
+    (act.snapshot_proprietarios||[]).forEach(p=>{const pct=pctOf(p.percentual);if(pct>0&&curM2>0)p.area_calc=fmtArea(curM2*(pct/100));});
+  });
+  const finalM2=parseAreaToM2(im.area_atual||'')||curM2;
+  if(finalM2>0){
+    (data.proprietarios_atuais||[]).forEach(p=>{
+      const pct=pctOf(p.percentual);
+      if(pct>0){const expM2=finalM2*(pct/100),origM2=parseAreaToM2(p.area_correspondente||'');if(Math.abs(expM2-origM2)>1)p.area_continua=fmtArea(expM2);}
+    });
+  }
+}
+// Área (m²) de um proprietário atual: declarada/calculada, ou derivada do percentual sobre a área do imóvel
+function ownerM2(m){
+  const a=parseAreaToM2(m.area_continua||m.area_correspondente||'');
+  if(a>0)return a;
+  const im=gData?.imovel||{},tot=parseAreaToM2(im.area_atual||im.area_original||'');
+  return tot>0?tot*(pctOf(m.percentual)/100):0;
+}
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll(data,provLabel){
+  if(stepTimer)clearInterval(stepTimer);
+  hide('loadingS');
+  gData=cleanData(data);
+  gData._meta={provider:provLabel,analisado_em:new Date().toISOString()};
+  applyContinuity(gData);
+  gDiag=runOfflineVerification(gData);
+  gActIdx=-1;
+  renderDash(gData,gDiag);
+  renderSmartAlerts(gDiag);
+  setOwnerView(gOwnerView);
+  renderTimeline(gData.cadeia_possessoria,gDiag);
+  renderHist(gData.cadeia_possessoria);
+  renderDiag(gData,gDiag);
+  document.getElementById('snapContent').innerHTML=`<div class="snap-empty"><div class="snap-empty-ic">👆</div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>`;
+  document.getElementById('parecerArea').style.display='none';
+  document.getElementById('bdg-donos').textContent=gData.proprietarios_atuais.length;
+  document.getElementById('bdg-tl').textContent=gData.cadeia_possessoria.length;
+  const erCount=gDiag.filter(d=>d.sev==='er').length;
+  const diagBdg=document.getElementById('bdg-diag');
+  if(erCount>0){diagBdg.textContent=erCount;diagBdg.style.display='';}else diagBdg.style.display='none';
+  document.getElementById('analysisTs').textContent=`Analisado em ${new Date().toLocaleString('pt-BR')} via ${provLabel}`;
+  switchTab('donos');show('resultsS');
+  document.getElementById('resultsS').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function scoreInfo(data,diag){
+  const erCount=diag.filter(d=>d.sev==='er').length,wnCount=diag.filter(d=>d.sev==='wn').length;
+  let val=(data.score&&data.score.valor!==null&&data.score.valor!==undefined)?pctOf(data.score.valor):NaN;
+  if(isNaN(val))val=100-erCount*15-wnCount*7;
+  val=Math.round(Math.max(0,Math.min(100,val)));
+  const cat=val>=90?'Regular':val>=70?'Regular com ressalvas':val>=50?'Irregular com ressalvas':'Irregular';
+  const icon=val>=90?'✅':val>=70?'🟡':val>=50?'🟠':'🔴';
+  const col=val>=90?'var(--ok)':val>=70?'var(--wn)':val>=50?'#c05a00':'var(--er)';
+  const dc=val>=90?'dc-ok':val>=70?'dc-wn':'dc-er';
+  return{val,cat,icon,col,dc,erCount,wnCount};
+}
+
+function renderDash(data,diag){
+  const im=data.imovel||{},owners=data.proprietarios_atuais||[];
+  const s=scoreInfo(data,diag);
+  const areaChanged=im.area_original&&im.area_atual&&parseAreaToM2(im.area_original)!==parseAreaToM2(im.area_atual);
+  const pcts=owners.map((o,i)=>`<span style="color:${COLORS[i%COLORS.length]};font-weight:800">${pctOf(o.percentual).toFixed(0)}%</span>`).join(' · ');
+  const nC=groupOwners(owners).filter(g=>g.isGroup).length;
+  document.getElementById('dash').innerHTML=`
+    <div class="dc">
+      <div class="dc-lbl">🏠 Matrícula</div>
+      <div class="dc-val">Nº ${h(im.numero_matricula)||'—'}</div>
+      <div class="dc-sub">${h(im.cartorio)||'—'}</div>
+      <div class="dc-sub" style="font-size:10px;margin-top:2px">${h(im.localizacao)}</div>
+    </div>
+    <div class="dc clickable" onclick="switchTab('donos')" title="Ver proprietários">
+      <div class="dc-lbl">👥 Proprietários</div>
+      <div class="dc-val">${owners.length}</div>
+      <div class="dc-sub">${pcts||'—'}</div>
+      ${nC?`<div class="dc-sub" style="font-size:10px">👫 ${nC} unidade(s) familiar(es)</div>`:''}
+    </div>
+    <div class="dc ${areaChanged?'dc-wn':''}">
+      <div class="dc-lbl">📐 Área</div>
+      <div class="dc-val" style="${areaChanged?'color:var(--wn)':''}">${h(im.area_atual||im.area_original)||'—'}</div>
+      <div class="dc-sub">${areaChanged?`↘ de ${h(im.area_original)}`:im.area_original?`Original: ${h(im.area_original)}`:'Não informada'}</div>
+    </div>
+    <div class="dc ${s.erCount>0?'dc-er':s.wnCount>0?'dc-wn':''} clickable" onclick="switchTab('diag')" title="Ver diagnóstico">
+      <div class="dc-lbl">⚠️ Alertas</div>
+      <div class="dc-val">${diag.length}</div>
+      <div class="dc-sub">${s.erCount?`${s.erCount} crítico(s)`:s.wnCount?`${s.wnCount} atenção`:'Nenhum crítico'}</div>
+    </div>
+    <div class="dc ${s.dc} clickable" onclick="switchTab('diag')" title="Ver diagnóstico">
+      <div class="dc-lbl">🔬 Regularidade</div>
+      <div class="dc-val" style="font-size:17px;color:${s.col}">${s.val}/100</div>
+      <div class="score-bar"><div class="score-fill" style="width:${s.val}%;background:${s.col}"></div></div>
+      <div class="dc-sub" style="margin-top:4px">${s.icon} ${s.cat}</div>
+    </div>`;
+}
+
+function renderSmartAlerts(diag){
+  const el=document.getElementById('smartAlerts');
+  const criticos=diag.filter(d=>d.sev==='er').slice(0,3);
+  if(!criticos.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="smart-alerts">${criticos.map(d=>`
+    <div class="sm-al alto">
+      <span style="flex-shrink:0">🔴</span>
+      <span><strong>${h(d.titulo)}</strong>${d.ato?' <span class="sm-src">['+h(d.ato)+']</span>':''} — ${h(trunc(d.corpo,120))}</span>
+    </div>`).join('')}</div>`;
+}
+
+// ─── PROPRIETÁRIOS: AGRUPAMENTO E MEAÇÃO ─────────────────────────────────────
+function setOwnerView(mode){
+  gOwnerView=mode;
+  document.getElementById('btnViewGroup').className=mode==='group'?'btn btn-p sm':'btn btn-g sm';
+  document.getElementById('btnViewInd').className=mode==='individual'?'btn btn-p sm':'btn btn-g sm';
+  if(gData)renderOwners(gData.proprietarios_atuais||[]);
+}
+
+function groupOwners(owners){
+  const groups=[],unassigned=[...owners];
+  while(unassigned.length>0){
+    const o=unassigned.shift();
+    const grp={id:groups.length,isGroup:false,isBothRegistered:false,members:[o],pct:pctOf(o.percentual),regime:o.regime_bens||'',name:o.nome||''};
+    // Cônjuge também titular? (O aponta X como cônjuge, ou X aponta O)
+    const spIdx=unassigned.findIndex(x=>namesMatch(o.conjuge,x.nome)||namesMatch(x.conjuge,o.nome));
+    if(spIdx!==-1){
+      const sp=unassigned.splice(spIdx,1)[0];
+      grp.isGroup=true;grp.isBothRegistered=true;grp.members.push(sp);
+      grp.pct+=pctOf(sp.percentual);grp.name=`${o.nome} + ${sp.nome}`;
+      if(sp.regime_bens&&!grp.regime)grp.regime=sp.regime_bens;
+    }else if(o.conjuge){
+      grp.isGroup=true;grp.name=`${o.nome} + ${o.conjuge}`;   // só o titular registrado; cônjuge inferido por meação
+    }
+    groups.push(grp);
+  }
+  return groups;
+}
+const spouseIsRegistered=(o,owners)=>owners.some(x=>x!==o&&(namesMatch(o.conjuge,x.nome)||namesMatch(x.conjuge,o.nome)));
+
+// Divide a fração registrada do titular entre ele e o cônjuge conforme as parcelas que comunicam.
+// null = indeterminável (sem parcelas e regime não conclusivo).
+function calcConjugeSplit(owner){
+  const parcelas=owner.parcelas||[],totalPct=pctOf(owner.percentual),totalM2=ownerM2(owner);
+  if(!totalPct)return null;
+  let propPct=0,meacaoPct=0;
+  if(parcelas.length){
+    parcelas.forEach(p=>{const pct=pctOf(p.percentual_parcela);if(p.comunica_conjuge)meacaoPct+=pct;else propPct+=pct;});
+    const sum=propPct+meacaoPct;
+    if(sum>0&&Math.abs(sum-totalPct)>0.5){const k=totalPct/sum;propPct*=k;meacaoPct*=k;}   // normaliza (ver alerta 1b)
+    else if(sum===0)return null;
+  }else{
+    const r=owner.regime_bens||'';
+    if(r==='comunhao_universal')meacaoPct=totalPct;else if(r.startsWith('separacao'))propPct=totalPct;else return null;
+  }
+  const ownerPct=propPct+meacaoPct/2,spousePct=meacaoPct/2;
+  return{ownerPct,spousePct,meacaoPct,propPct,totalPct,
+    ownerM2:totalM2>0?totalM2*(ownerPct/totalPct):0,spouseM2:totalM2>0?totalM2*(spousePct/totalPct):0};
+}
+
+// Coluna Natureza/Como Adquiriu: forma de aquisição + badge de comunicação
+function natCellHTML(m,split){
+  const parcelas=m.parcelas||[],acq=ownerAcqLabel(m);
+  const temProprio=split?split.propPct>0.0001:parcelas.some(p=>!p.comunica_conjuge);
+  const temMeacao=split?split.meacaoPct>0.0001:parcelas.some(p=>p.comunica_conjuge);
+  let cls='',lbl='',tip='';
+  if(temProprio&&temMeacao){cls='nat-misto';lbl='Misto';tip='Parte comunica ao cônjuge, parte é patrimônio particular';}
+  else if(temMeacao){cls='nat-meacao';lbl='Comunica';tip='Bem comum: 50% pertence ao cônjuge por meação';}
+  else if(parcelas.length||split){cls='nat-proprio';lbl='Próprio';tip='Patrimônio particular: não comunica ao cônjuge';}
+  else if(m.conjuge){cls='nat-indef';lbl='Indefinido';tip='Sem parcelas/regime para determinar a meação';}
+  return `<div class="nat-cell">${acq?`<span class="nat-tag">${h(acq)}</span>`:''}${lbl?`<span class="natureza-tag ${cls}" title="${tip}">${lbl}</span>`:''}${!acq&&!lbl?'—':''}</div>`;
+}
+// Linhas de detalhe das parcelas (ocultas por padrão). extraCol = modo individual (coluna "Adquiriu De")
+function parcelaRows(m,togId,grp,indent,extraCol){
+  return (m.parcelas||[]).map(p=>{
+    const pCls=p.comunica_conjuge?'nat-meacao':'nat-proprio',pLbl=p.comunica_conjuge?'Comunica':'Próprio';
+    const tr=findAct(p.ato_parcela);
+    return `<tr class="parc-detail parc-hidden" data-parc="${togId}"${grp!==null?` data-grp="${grp}"`:''}>
+      <td></td>
+      <td style="padding-left:${indent}px"><span style="color:var(--tm);margin-right:3px">⤷</span>${h(aqLabel(p.como_adquiriu))||'Aquisição'}${tr?.data?` <span style="color:var(--tm)">· ${h(tr.data)}</span>`:''}</td>
+      <td>—</td>
+      <td style="font-weight:700;color:var(--p)">${h(fmtFracao(p.fracao_parcela))||'—'}</td>
+      <td>${fmtPct(p.percentual_parcela)}</td>
+      <td style="font-weight:700;color:var(--ac)">${h(p.area_parcela)||'—'}</td>
+      <td><span class="natureza-tag ${pCls}" style="font-size:9px" title="${h(inferMotivo(p,m))}">${pLbl}</span></td>
+      ${extraCol?`<td>${h(tr?.transmitente)||'—'}</td>`:''}
+      <td><span class="ato-c">${h(p.ato_parcela)||'—'}</span></td>
+    </tr>`;
+  }).join('');
+}
+const detBtn=(togId,n)=>n?`<span class="parc-tog" onclick="event.stopPropagation();toggleParcelas('${togId}',this)" title="Ver cada aquisição que compõe a fração">▸ detalhes (${n})</span>`:'';
+const pctBar=(pct,col,sub)=>`<div class="pct-wrap"><div class="pct-bar"><div class="pct-fill" style="width:${Math.min(pct,100)}%;background:${col}"></div></div><div><span class="pct-n" style="color:${col}">${fmtPct(pct)}</span>${sub?`<div class="pct-sub">${sub}</div>`:''}</div></div>`;
+const areaDisp=m=>m.area_continua?`${h(m.area_continua)} <span class="calc-mark">(calc.)</span>`:(h(m.area_correspondente)||(ownerM2(m)>0?`${fmtArea(ownerM2(m))} <span class="calc-mark">(calc.)</span>`:'—'));
+
+// Linha do cônjuge inferido (usada nos dois modos)
+function spouseRow(m,split,opts){
+  const{grp,extraCol,cls,nameCls}=opts;
+  const has=split&&split.spousePct>0.0001;
+  let natCls,natLbl,pctHtml,areaHtml,fracHtml,note;
+  if(!split){natCls='nat-indef';natLbl='Meação indeterminada';pctHtml='<span class="pct-n" style="color:var(--tm)">?</span>';areaHtml='—';fracHtml='—';note='regime/parcelas não permitem calcular';}
+  else if(has){natCls='nat-meacao';natLbl='Meação (50%)';pctHtml=`<span class="pct-n" style="color:${SP_COL}">${fmtPct(split.spousePct)}</span><div class="pct-sub">de ${fmtPct(split.meacaoPct)} comuns</div>`;areaHtml=split.spouseM2>0?fmtArea(split.spouseM2):'—';fracHtml='meação';note='cônjuge · inferida';}
+  else{natCls='nat-proprio';natLbl='Sem meação';pctHtml=`<span class="pct-n" style="color:${SP_COL}">0,00%</span>`;areaHtml='—';fracHtml='—';note=`bem particular de ${h(firstName(m.nome))}`;}
+  return `<tr class="${cls} inferred-row" data-nm="${h(m.conjuge)}"${grp!==null?` data-grp="${grp}"`:''}>
+    <td></td>
+    <td class="${nameCls}"><div style="display:flex;align-items:flex-start"><span class="sub-ic">↳</span>
+      <div><div class="ow-name" style="color:${SP_COL};font-size:13px">${h(m.conjuge)} <span style="font-size:9px;color:var(--inf);font-weight:400">(${note})</span></div>
+      <div class="ow-sub">💍 ${h(regimeLbl(m.regime_bens))}</div></div></div></td>
+    <td><span class="ow-doc">${h(m.cpf_conjuge)||'Não consta'}</span></td>
+    <td><span class="frac-b" style="font-size:13px;color:var(--tm)">${fracHtml}</span></td>
+    <td>${pctHtml}</td>
+    <td class="area-cell">${areaHtml}</td>
+    <td><span class="natureza-tag ${natCls}">${natLbl}</span></td>
+    ${extraCol?'<td>—</td>':''}
+    <td><span class="ato-c">${h(m.ato_referencia)||'—'}</span></td>
+  </tr>`;
+}
+function renderOwners(owners){
+  const tb=document.getElementById('ownersTb'),th=document.getElementById('ownersTh'),hint=document.getElementById('conjViewHint');
+  const grpCtl=document.getElementById('grpCtl');
+  if(!owners.length){th.innerHTML='<th>#</th><th>Proprietário</th>';tb.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--tm)">Nenhum proprietário identificado</td></tr>`;grpCtl.style.display='none';return;}
+  const total=owners.reduce((s,o)=>s+pctOf(o.percentual),0),okT=Math.abs(total-100)<0.5;
+  const totalsRow=(cols,note)=>`<tr class="totals-row"><td colspan="4" style="text-align:right;font-size:12px;color:var(--tm)">Total registrado</td><td><div class="pct-wrap"><div class="pct-bar"><div class="pct-fill" style="width:100%;background:var(--p)"></div></div><span class="pct-n" style="color:${okT?'var(--ok)':'var(--er)'}">${fmtPct(total)}</span></div></td><td colspan="${cols}"><span class="totals-note">${note}</span></td></tr>`;
+
+  if(gOwnerView==='group'){
+    th.innerHTML=`<th>#</th><th>Unidade Familiar / Titular</th><th>CPF/CNPJ</th><th>Fração</th><th>%</th><th>Área</th><th>Natureza do Título</th><th>Ato(s)</th>`;
+    const groups=groupOwners(owners),nG=groups.filter(g=>g.isGroup).length;
+    grpCtl.style.display=nG?'inline-flex':'none';
+    hint.innerHTML=nG?`${nG} unidade(s) familiar(es) identificada(s) — clique no cabeçalho do casal para expandir. <span class="natureza-tag nat-meacao" style="font-size:9px">Meação</span> = inferida pelas regras do regime de bens.`:'Nenhum casal identificado entre os titulares.';
+    let html='';
+    groups.forEach((g,i)=>{
+      const col=COLORS[i%COLORS.length];
+      if(g.isGroup){
+        const atos=uniq(g.members.flatMap(m=>String(m.ato_referencia||'').split(/[,;]/).map(s=>s.trim()))).join(', ');
+        const areaM2=g.members.reduce((a,m)=>a+ownerM2(m),0);
+        // Resumo por pessoa para o cabeçalho recolhido
+        let resumo;
+        if(g.isBothRegistered)resumo=g.members.map(m=>`${h(firstName(m.nome))} ${fmtPct(m.percentual)}`).join(' · ');
+        else{const m=g.members[0],sp=calcConjugeSplit(m);resumo=sp?`${h(firstName(m.nome))} ${fmtPct(sp.ownerPct)} · ${h(firstName(m.conjuge))} ${fmtPct(sp.spousePct)}`:`${h(firstName(m.nome))} titular · meação indeterminada`;}
+        const natHdr=g.isBothRegistered?`<span class="natureza-tag nat-indef">2 titulares</span>`:`<span class="natureza-tag nat-indef">1 titular + cônjuge</span>`;
+        html+=`<tr class="group-row" data-grp="${g.id}" data-nm="${h(g.name)}" tabindex="0" role="button" aria-expanded="false" onclick="toggleGroup(${g.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleGroup(${g.id})}">
+          <td class="idx">${i+1}</td>
+          <td><div class="ow-name"><span class="grp-caret">▸</span>👫 ${h(g.name)}</div><div class="group-regime">${h(regimeLbl(g.regime))}</div></td>
+          <td>—</td><td>—</td>
+          <td>${pctBar(g.pct,col,resumo)}</td>
+          <td class="area-cell">${areaM2>0?fmtArea(areaM2):'—'}</td>
+          <td>${natHdr}</td>
+          <td><span class="ato-c">${h(atos)||'—'}</span></td>
+        </tr>`;
+        g.members.forEach((m,mi)=>{
+          const togId=`p${g.id}-${mi}`,split=(!g.isBothRegistered&&m.conjuge)?calcConjugeSplit(m):null;
+          const pctSub=split?`registrado ${fmtPct(m.percentual)}`:'';
+          const pctMain=split?split.ownerPct:pctOf(m.percentual);
+          const aHtml=split?(split.ownerM2>0?`${fmtArea(split.ownerM2)} <span class="calc-mark">(efetiva)</span>`:areaDisp(m)):areaDisp(m);
+          html+=`<tr class="sub-row grp-hidden" data-grp="${g.id}" data-nm="${h(m.nome)}">
+            <td></td>
+            <td class="sub-row-name-cell"><div style="display:flex;align-items:flex-start"><span class="sub-ic">↳</span><div><div class="ow-name" style="color:${col};font-size:13px">${h(m.nome)}${detBtn(togId,m.parcelas.length)}</div>${g.isBothRegistered&&m.conjuge?`<div class="ow-sub">💍 ${h(m.conjuge)}</div>`:''}</div></div></td>
+            <td><span class="ow-doc">${h(m.cpf_cnpj)||'—'}</span></td>
+            <td><span class="frac-b" style="font-size:13px">${h(fmtFracao(m.fracao))||'—'}</span></td>
+            <td><span class="pct-n" style="color:${col}">${fmtPct(pctMain)}</span>${pctSub?`<div class="pct-sub">${pctSub}</div>`:''}</td>
+            <td class="area-cell">${aHtml}</td>
+            <td>${natCellHTML(m,split)}</td>
+            <td><span class="ato-c">${h(m.ato_referencia)||'—'}</span></td>
+          </tr>`;
+          html+=parcelaRows(m,togId,g.id,64,false);
+          if(!g.isBothRegistered&&m.conjuge)html+=spouseRow(m,split,{grp:g.id,extraCol:false,cls:'sub-row grp-hidden',nameCls:'sub-row-name-cell'});
+        });
+      }else{
+        const m=g.members[0],togId=`p${g.id}-0`;
+        html+=`<tr data-nm="${h(m.nome)}">
+          <td class="idx">${i+1}</td>
+          <td><div class="ow-name" style="color:${col}">${h(m.nome)}${detBtn(togId,m.parcelas.length)}</div></td>
+          <td><span class="ow-doc">${h(m.cpf_cnpj)||'—'}</span></td>
+          <td><span class="frac-b">${h(fmtFracao(m.fracao))||'—'}</span></td>
+          <td>${pctBar(g.pct,col,'')}</td>
+          <td class="area-cell">${areaDisp(m)}</td>
+          <td>${natCellHTML(m,null)}</td>
+          <td><span class="ato-c">${h(m.ato_referencia)||'—'}</span></td>
+        </tr>`;
+        html+=parcelaRows(m,togId,null,40,false);
+      }
+    });
+    tb.innerHTML=html+totalsRow(3,'Meações inferidas não somam — total pelas frações registradas');
+  }else{
+    // ── Modo Individual: cônjuge não titular aparece como linha própria (inferida) ──
+    grpCtl.style.display='none';
+    const nInf=owners.filter(o=>o.conjuge&&!spouseIsRegistered(o,owners)).length;
+    th.innerHTML=`<th>#</th><th>Proprietário</th><th>CPF/CNPJ</th><th>Fração</th><th>Percentual</th><th>Área</th><th>Como Adquiriu</th><th>Adquiriu De</th><th>Ato</th>`;
+    hint.innerHTML=nInf?`Lista individual. ${nInf} cônjuge(s) não titular(es) exibido(s) em linha própria (inferida) — não contam no total.`:'Lista individual de titulares registrados.';
+    let html='';
+    owners.forEach((o,i)=>{
+      const col=COLORS[i%COLORS.length],togId=`i${i}`;
+      const spReg=o.conjuge&&spouseIsRegistered(o,owners);
+      const split=(o.conjuge&&!spReg)?calcConjugeSplit(o):null;
+      const pctMain=split?split.ownerPct:pctOf(o.percentual);
+      const aHtml=split?(split.ownerM2>0?`${fmtArea(split.ownerM2)} <span class="calc-mark">(efetiva)</span>`:areaDisp(o)):areaDisp(o);
+      const conjLine=o.conjuge?`<div class="ow-sub">💍 ${h(o.conjuge)}${spReg?' <span style="color:var(--ok)">(também titular)</span>':''} · ${h(regimeLbl(o.regime_bens))}</div>`:'';
+      html+=`<tr data-nm="${h(o.nome)}">
+        <td class="idx">${i+1}</td>
+        <td><div class="ow-name" style="color:${col}">${h(o.nome)}${detBtn(togId,o.parcelas.length)}</div>${conjLine}</td>
+        <td><span class="ow-doc">${h(o.cpf_cnpj)||'—'}</span></td>
+        <td><span class="frac-b">${h(fmtFracao(o.fracao))||'—'}</span></td>
+        <td>${pctBar(pctMain,col,split?`registrado ${fmtPct(o.percentual)}`:'')}</td>
+        <td class="area-cell">${aHtml}</td>
+        <td>${natCellHTML(o,split)}</td>
+        <td style="font-size:12.5px">${h(adquiriuDe(o))||'—'}</td>
+        <td><span class="ato-c">${h(o.ato_referencia)||'—'}</span></td>
+      </tr>`;
+      html+=parcelaRows(o,togId,null,40,true);
+      if(o.conjuge&&!spReg)html+=spouseRow(o,split,{grp:null,extraCol:true,cls:'ind-sub',nameCls:'ind-name-cell'});
+    });
+    tb.innerHTML=html+totalsRow(4,nInf?'Linhas de cônjuge inferido não entram no total':'');
+  }
+  const sv=document.getElementById('srchInp').value;if(sv)applyHL(sv);
+}
+
+// ─── Toggles (casal / parcelas) ────────────────────────────────────────────
+function toggleGroup(gid,force){
+  const hdr=document.querySelector(`tr.group-row[data-grp="${gid}"]`);if(!hdr)return;
+  const open=force===undefined?!hdr.classList.contains('open'):force;
+  hdr.classList.toggle('open',open);
+  hdr.setAttribute('aria-expanded',open);
+  hdr.querySelector('.grp-caret').textContent=open?'▾':'▸';
+  document.querySelectorAll(`tr[data-grp="${gid}"]:not(.group-row)`).forEach(r=>r.classList.toggle('grp-hidden',!open));
+}
+function setAllGroups(open){document.querySelectorAll('tr.group-row').forEach(r=>toggleGroup(r.dataset.grp,open));}
+function toggleParcelas(togId,btn){
+  const rows=document.querySelectorAll(`tr.parc-detail[data-parc="${togId}"]`);if(!rows.length)return;
+  const open=rows[0].classList.contains('parc-hidden');
+  rows.forEach(r=>r.classList.toggle('parc-hidden',!open));
+  if(btn)btn.textContent=open?`▾ ocultar (${rows.length})`:`▸ detalhes (${rows.length})`;
+}
+// ─── TIMELINE / SNAPSHOT ─────────────────────────────────────────────────────
+function evCls(act){
+  const n=(act.natureza||'').toLowerCase();
+  if(act.evento_area)return'ev-ar';
+  if(/cancel|baixa|extin/.test(n))return'ev-cn';
+  if(/hipoteca|penhora|aliena[cç]|arresto|indisponibilidade/.test(n))return'ev-on';
+  if(/compra|venda|heran[cç]a|doa[cç][aã]o|invent[aá]rio|permuta|adjudic|usucap|abertura|da[cç][aã]o|partilha|arremata/.test(n))return'ev-tr';
+  return'ev-ad';
+}
+function evCol(cls){return{'ev-tr':'var(--ctr)','ev-on':'var(--con)','ev-cn':'var(--ccn)','ev-ar':'var(--car)','ev-ad':'var(--cad)'}[cls]||'var(--cad)';}
+const diagOf=ato=>gDiag.filter(d=>d.ato&&normAto(d.ato)===normAto(ato));
+
+function renderTimeline(chain,diag){
+  const inner=document.getElementById('htlInner');
+  if(!chain.length){inner.innerHTML='<div class="htl-line"></div><div style="padding:16px;color:var(--tm);font-size:13px">Nenhum ato identificado.</div>';return;}
+  inner.innerHTML='<div class="htl-line"></div>'+chain.map((act,i)=>{
+    const cls=evCls(act),actDiag=diagOf(act.ato);
+    const hasEr=actDiag.some(d=>d.sev==='er'),hasWn=actDiag.some(d=>d.sev==='wn'||d.inferencia);
+    const ring=hasEr?`<div class="htl-alert-ring er"></div>`:hasWn?`<div class="htl-alert-ring wn"></div>`:'';
+    const ds=(act.data||'').split('/'),dateShort=ds.length>=2?ds.slice(1).join('/'):act.data||'';
+    const arTag=act.evento_area?'<span class="htl-tag htl-tag-ar">📐</span>':'';
+    const onTag=(act.onus_ativos||[]).length?'<span class="htl-tag htl-tag-on">⚠</span>':'';
+    return `<div class="htl-item ${cls}" id="htli-${i}" onclick="selectAct(${i})" title="${h(act.natureza||act.ato)}">
+      <div class="htl-dw"><div class="htl-dot"></div>${ring}</div>
+      <div class="htl-ato">${h(act.ato)||'—'}</div>
+      <div class="htl-dt">${h(dateShort)}</div>
+      <div class="htl-nat">${h(trunc(act.natureza||'',20))}</div>
+      ${arTag||onTag?`<div class="htl-tags">${arTag}${onTag}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function gotoAct(ato){const i=findActIdx(ato);if(i<0)return;switchTab('tl');selectAct(i);const el=document.getElementById('htli-'+i);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('panel-tl').classList.contains('active')||gActIdx<0||/input|textarea/i.test(e.target.tagName))return;
+  if(e.key==='ArrowRight')selectAct(gActIdx+1);else if(e.key==='ArrowLeft')selectAct(gActIdx-1);
+});
+
+function selectAct(i){
+  const chain=gData?.cadeia_possessoria||[],act=chain[i];if(!act)return;
+  gActIdx=i;
+  document.querySelectorAll('.htl-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  const cls=evCls(act),col=evCol(cls),actDiag=diagOf(act.ato);
+  let x=`<div class="snap-view">`;
+  x+=`<div class="snap-hd"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="snap-badge" style="background:${col}">${h(act.ato)||'—'}</span><span class="snap-nat">${h(act.natureza)}</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="snap-dt">${h(act.data)||'Data não informada'}</span>
+    <span class="snap-nav"><button class="btn btn-g sm" ${i<=0?'disabled':''} onclick="selectAct(${i-1})" title="Ato anterior (←)">‹</button><button class="btn btn-g sm" ${i>=chain.length-1?'disabled':''} onclick="selectAct(${i+1})" title="Próximo ato (→)">›</button></span></div></div>`;
+  if(act.resumo)x+=`<div class="snap-summary">${h(act.resumo)}</div>`;
+  const meta=[];
+  if(act.transmitente||act.adquirente)meta.push(`👥 ${act.transmitente?`<strong>${h(act.transmitente)}</strong> → `:''}<strong style="color:var(--p)">${h(act.adquirente)||'—'}</strong>${act.fracao?` <span class="hist-frac">${h(act.fracao)}</span>`:''}`);
+  if(act.valor)meta.push(`💰 <strong>Valor:</strong> ${h(act.valor)}`);
+  const areaNow=act.area_remanescente||(act._area_m2>0?fmtArea(act._area_m2):'');
+  if(areaNow)meta.push(`📐 <strong>Área da matrícula neste momento:</strong> <span style="color:var(--ac);font-weight:700">${h(areaNow)}</span>`);
+  if(meta.length)x+=`<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ts)">${meta.map(m=>`<span>${m}</span>`).join('')}</div>`;
+
+  if(actDiag.length){
+    x+=`<div class="snap-sec"><div class="snap-sec-t">🔬 Alertas deste ato</div><div style="display:flex;flex-direction:column;gap:6px">`;
+    for(const d of actDiag){
+      const c2=d.sev==='er'?'alto':d.inferencia?'inferencia':d.sev==='wn'?'medio':'info';
+      x+=`<div class="sm-al ${c2}"><span style="flex-shrink:0">${d.sev==='er'?'🔴':d.inferencia?'🔮':d.sev==='wn'?'🟡':'🔵'}</span><div><strong>${h(d.titulo)}</strong><br/><span style="font-size:12px">${h(d.corpo)}</span>${d.calc?`<div style="margin-top:6px;font-family:monospace;font-size:11px;background:rgba(0,0,0,.05);padding:6px;border-radius:4px;white-space:pre-wrap">${h(d.calc)}</div>`:''}</div></div>`;
+    }
+    x+=`</div></div>`;
+  }
+  if(act.evento_area){
+    const ev=act.evento_area,tic={desmembramento:'✂️',remembramento:'🔗',retificacao:'📝',georreferenciamento:'🛰️',incorporacao:'🏗️',desapropriacao:'🏛️'}[ev.tipo]||'📐';
+    x+=`<div class="area-ev standard"><div class="area-ev-t">${tic} ${h((ev.tipo||'').toUpperCase())}${ev.redistribuicao_especificada===false?' <span class="infer-label">redistribuição não especificada</span>':''}</div>
+      <div class="area-diag"><div class="area-box" style="color:var(--ts)"><div class="area-box-v">${h(ev.area_antes)||'—'}</div><div class="area-box-l">Antes</div></div><div class="area-arr">→</div><div class="area-box" style="color:var(--ac)"><div class="area-box-v">${h(ev.area_depois)||'—'}</div><div class="area-box-l">Após</div></div></div>
+      <div class="area-desc">${h(ev.descricao)}${(ev.matriculas_relacionadas||[]).length?' · Mat.: '+h(ev.matriculas_relacionadas.join(', ')):''}</div></div>`;
+  }
+  const snap=act.snapshot_proprietarios||[];
+  if(snap.length){
+    x+=`<div class="snap-sec"><div class="snap-sec-t">👥 Proprietários imediatamente após este ato</div><div class="snap-ow-rows">${snap.map((p,i2)=>{
+      const pct=pctOf(p.percentual),c=COLORS[i2%COLORS.length],ar=p.area_calc||p.area_correspondente||'';
+      return `<div class="snap-ow" data-nm="${h(p.nome)}"><div class="snap-ow-top"><span class="snap-ow-name" style="color:${c}" title="${h(p.nome)}">${h(p.nome)||'—'}</span><div class="snap-ow-bw"><div class="snap-ow-bf" style="width:${Math.min(pct,100)}%;background:${c}"></div></div><span class="snap-ow-pct" style="color:${c}">${fmtPct(pct)}</span></div>
+        <div class="snap-ow-bottom"><span class="snap-ow-fr">${h(fmtFracao(p.fracao))}</span>${ar?`<span class="snap-ow-ar">📐 ${h(ar)}${p.area_calc?' <span class="calc-mark">(calc.)</span>':''}</span>`:''}</div></div>`;
+    }).join('')}</div></div>`;
+  }
+  const onus=act.onus_ativos||[];
+  x+=`<div class="snap-sec"><div class="snap-sec-t">⚖️ Ônus ativos neste momento</div>${onus.length?`<div class="onus-list">${onus.map(o=>`<div class="onus-it ${h((o.tipo||'outros').replace(/\s/g,'_'))}"><span style="flex-shrink:0">⚠️</span><div><strong>${h((o.tipo||'').replace(/_/g,' ').toUpperCase())}</strong>${o.credor_beneficiario?' — '+h(o.credor_beneficiario):''}${o.fracao_atingida?` <span class="hist-frac">${h(o.fracao_atingida)}</span>`:''}<br/><span style="opacity:.85">${h(o.descricao)}</span></div></div>`).join('')}</div>`:`<div class="onus-none">Nenhum ônus ativo neste momento</div>`}</div>`;
+  x+=`</div>`;
+  document.getElementById('snapContent').innerHTML=x;
+  const sv=document.getElementById('srchInp').value;if(sv)applyHL(sv);
+}
+
+// ─── HISTÓRICO ────────────────────────────────────────────────────────────────
+function renderHist(chain){
+  const el=document.getElementById('histList');
+  if(!chain.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--tm)">Nenhum ato identificado</div>';return;}
+  el.innerHTML=chain.map((act,i)=>{
+    const cls=evCls(act),col=evCol(cls),actDiag=diagOf(act.ato);
+    const arTag=act.evento_area?`<span class="tag-ar">📐 ${h(act.evento_area.tipo||'área')}</span>`:'';
+    const onTags=(act.onus_ativos||[]).map(o=>`<span class="tag-on">⚠ ${h((o.tipo||'ônus').replace(/_/g,' '))}</span>`).join('');
+    const cnTag=/cancel/.test((act.natureza||'').toLowerCase())?'<span class="tag-cn">✅ cancelamento</span>':'';
+    const diagTags=actDiag.length?`<span class="tag-inf" onclick="switchTab('diag')">🔬 ${actDiag.length} alerta(s)</span>`:'';
+    let parties='';
+    if(act.transmitente&&act.adquirente)parties=`<div class="hist-parties"><span class="hist-party">${h(act.transmitente)}</span><span class="hist-arr">→</span><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
+    else if(act.adquirente)parties=`<div class="hist-parties"><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
+    const tags=arTag+onTags+cnTag+diagTags;
+    return `<div class="hist-it" data-nm="${h([act.transmitente,act.adquirente].filter(Boolean).join(' '))}">
+      <div class="hist-side" onclick="gotoAct('${h(act.ato)}')" title="Ver na linha do tempo"><div class="hist-ato" style="background:${col}">${h(act.ato)||'?'}</div><div class="hist-date">${h(act.data||'').replace(/\//g,'<br/>')}</div></div>
+      <div class="hist-body"><div class="hist-nat">${h(act.natureza)||'—'}</div><div class="hist-sum">${h(act.resumo)}</div>${parties}${tags?`<div class="hist-tags">${tags}</div>`:''}
+        ${act.area_remanescente?`<div style="font-size:11px;color:var(--ac);margin-top:3px;font-weight:700">📐 ${h(act.area_remanescente)}</div>`:''}
+        ${act.valor?`<div style="font-size:11.5px;color:var(--tm);margin-top:2px">💰 ${h(act.valor)}</div>`:''}</div>
+    </div>`;
+  }).join('');
+}
+// ─── DIAGNÓSTICO ──────────────────────────────────────────────────────────────
+function renderDiag(data,diag){
+  const s=scoreInfo(data,diag),infCount=diag.filter(d=>d.inferencia).length;
+  const fp=(data.score?.fatores_positivos||[]).slice(0,3),fn=(data.score?.fatores_negativos||[]).slice(0,3);
+  document.getElementById('scoreBlock').innerHTML=`
+    <div class="score-circle" style="color:${s.col};border-color:${s.col}"><div class="sc-num">${s.val}</div><div class="sc-den">/100</div></div>
+    <div class="score-details"><div class="score-cat" style="color:${s.col}">${s.cat}</div>
+      <div class="score-factors">
+        ${s.erCount?`<span style="color:var(--er)">🔴 ${s.erCount} crítico(s)</span> · `:''}${s.wnCount?`<span style="color:var(--wn)">🟡 ${s.wnCount} atenção</span> · `:''}${infCount?`<span style="color:var(--inf)">🔮 ${infCount} inferência(s)</span>`:''}
+        ${!diag.length?'<span style="color:var(--ok)">Nenhuma inconsistência identificada</span>':''}
+        ${fp.length?`<br/><span style="color:var(--ok)">✅ ${h(fp.join(' · '))}</span>`:''}${fn.length?`<br/><span style="color:var(--er)">❌ ${h(fn.join(' · '))}</span>`:''}
+      </div></div>`;
+  const cats={propriedade:{label:'👥 Propriedade e Frações',items:[]},area:{label:'📐 Área e Desmembramentos',items:[]},onus:{label:'⚖️ Ônus e Gravames',items:[]},temporal:{label:'⏱️ Sequência Temporal',items:[]},juridico:{label:'📋 Aspectos Jurídicos',items:[]}};
+  for(const d of diag)(cats[d.cat]||cats.juridico).items.push(d);
+  const catsEl=document.getElementById('diagCats');
+  if(!diag.length){catsEl.innerHTML=`<div class="diag-empty">✅ Nenhuma inconsistência identificada.<br/>A cadeia possessória parece regular com base nos dados analisados.</div>`;return;}
+  const rank={er:0,wn:1,ii:2};
+  catsEl.innerHTML=Object.values(cats).filter(v=>v.items.length).map(v=>{
+    const items=[...v.items].sort((a,b)=>rank[a.sev]-rank[b.sev]).map(d=>{
+      const dcls=d.sev==='er'?'er':d.inferencia?'inf':d.sev==='wn'?'wn':'ii';
+      const icon=d.sev==='er'?'🔴':d.inferencia?'🔮':d.sev==='wn'?'🟡':'🔵';
+      return `<div class="diag-item ${dcls}">
+        <div class="diag-item-h">${icon} ${h(d.titulo)} ${d.ato?`<span class="diag-item-src">[${h(d.ato)}]</span>`:''} ${d.inferencia?`<span class="infer-label" style="font-size:9px">Inferência — verificar</span>`:''}</div>
+        <div class="diag-item-body">${h(d.corpo)} <span style="font-size:10px;opacity:.6">${h(d.src)}</span></div>
+        ${d.calc?`<div class="diag-item-calc">${h(d.calc)}</div>`:''}
+        ${d.ato&&findActIdx(d.ato)>=0?`<span class="diag-link" onclick="gotoAct('${h(d.ato)}')">Ver na linha do tempo →</span>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="diag-cat"><div class="diag-cat-h" onclick="toggleCat(this)">${v.label} <span style="font-size:12px;color:var(--tm)">${v.items.length} item(s)</span></div><div class="diag-cat-b">${items}</div></div>`;
+  }).join('');
+}
+function toggleCat(hd){const b=hd.nextElementSibling;b.style.display=b.style.display==='none'?'':'none';}
+
+// ─── PARECER ──────────────────────────────────────────────────────────────────
+function toggleParecer(){const el=document.getElementById('parecerArea');if(el.style.display==='none'){gerarParecer(false);el.style.display='';}else el.style.display='none';}
+function gerarParecer(navigate){
+  if(!gData){toast('Faça uma análise primeiro.','w');return;}
+  const d=gData,im=d.imovel||{},owners=d.proprietarios_atuais||[],s=scoreInfo(d,gDiag);
+  const infCount=gDiag.filter(x=>x.inferencia).length;
+  const now=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const L=(n,c='─')=>c.repeat(n);
+  let t=`PARECER TÉCNICO DE ANÁLISE DE CADEIA POSSESSÓRIA\n${L(55,'═')}\n\n`;
+  t+=`Matrícula nº: ${im.numero_matricula||'N/I'}\nCartório: ${im.cartorio||'N/I'}\nLocalização: ${im.localizacao||'N/I'}\nÁrea original: ${im.area_original||'N/I'}\nÁrea atual: ${im.area_atual||im.area_original||'N/I'}\nAtos analisados: ${(d.cadeia_possessoria||[]).length}\n`;
+  t+=`Data da análise: ${now}\nMétodo: Extração por IA (${d._meta?.provider||'N/I'}) + verificação determinística local\n\n`;
+  t+=`CLASSIFICAÇÃO: ${s.cat.toUpperCase()} (Score: ${s.val}/100)\n${L(55)}\n\n`;
+  t+=`SÍNTESE:\nForam identificados ${s.erCount} problema(s) crítico(s), ${s.wnCount} alerta(s) de atenção e ${infCount} ponto(s) de inferência (atos que não especificaram todas as consequências e foram interpretados com base nas regras gerais do Direito Real).\n\n`;
+  t+=`PROPRIETÁRIOS ATUAIS (TITULARES REGISTRADOS)\n${L(30)}\n`;
+  owners.forEach((o,i)=>{
+    t+=`${i+1}. ${o.nome||'N/I'}${o.cpf_cnpj?` (${o.cpf_cnpj})`:''}\n   Fração: ${o.fracao||'N/I'} (${fmtPct(o.percentual)})`;
+    const ar=o.area_continua||o.area_correspondente;if(ar)t+=` | Área: ${ar}${o.area_continua?' (calculada)':''}`;
+    t+=`\n   Título: ${ownerAcqLabel(o)||'N/I'} — Ato(s): ${o.ato_referencia||'N/I'}`;
+    const de=adquiriuDe(o);if(de)t+=` — Adquiriu de: ${de}`;
+    if(o.parcelas.length>1)o.parcelas.forEach(p=>{t+=`\n     · ${p.ato_parcela||'?'}: ${aqLabel(p.como_adquiriu)} ${p.fracao_parcela||''} (${fmtPct(p.percentual_parcela)}) — ${p.comunica_conjuge?'comunica ao cônjuge':'patrimônio particular'}`;});
+    if(o.conjuge){
+      const reg=spouseIsRegistered(o,owners),sp=reg?null:calcConjugeSplit(o);
+      t+=`\n   Cônjuge: ${o.conjuge} — ${regimeLbl(o.regime_bens)}`;
+      if(reg)t+=` (também titular registrado)`;
+      else if(sp)t+=sp.spousePct>0.0001?`\n   Meação inferida: ${fmtPct(sp.spousePct)} do imóvel (${fmtPct(sp.meacaoPct)} comunicáveis ÷ 2); titular efetivo ${fmtPct(sp.ownerPct)}`:`\n   Meação: não há (patrimônio particular)`;
+      else t+=`\n   Meação: indeterminável com os dados da certidão`;
+    }
+    t+='\n';
+  });
+  if(gDiag.length){
+    t+=`\nOCORRÊNCIAS IDENTIFICADAS\n${L(30)}\n`;
+    for(const[sev,lbl]of[['er','CRÍTICO'],['wn','ATENÇÃO'],['ii','INFORMATIVO']]){
+      const items=gDiag.filter(x=>x.sev===sev&&!x.inferencia);if(!items.length)continue;
+      t+=`\n[${lbl}]\n`;
+      items.forEach((x,i)=>{t+=`${i+1}. ${x.titulo}${x.ato?' ('+x.ato+')':''}\n   ${x.corpo}\n   Fonte: ${x.src}\n`;if(x.calc)t+=`   Cálculo:\n${x.calc.split('\n').map(l=>'   │ '+l).join('\n')}\n`;});
+    }
+    const infs=gDiag.filter(x=>x.inferencia);
+    if(infs.length){
+      t+=`\n[INFERÊNCIAS DO SISTEMA — Atos silenciosos interpretados]\nNota: Os itens abaixo referem-se a atos que não especificaram todas as suas consequências.\nO sistema aplicou as regras gerais do Direito Real e calculou o resultado esperado.\nRecomenda-se verificar os instrumentos originais.\n\n`;
+      infs.forEach((x,i)=>{t+=`${i+1}. ${x.titulo}\n   ${x.corpo}\n`;if(x.calc)t+=`${x.calc.split('\n').map(l=>'   '+l).join('\n')}\n`;t+='\n';});
+    }
+  }
+  if(d.observacoes)t+=`\nOBSERVAÇÕES DA IA\n${L(30)}\n${d.observacoes}\n`;
+  t+=`\n${L(55,'═')}\nEste parecer foi gerado automaticamente por sistema de IA.\nNão substitui análise jurídica por profissional habilitado.\nOs dados são extraídos da certidão fornecida e estão sujeitos à conferência manual.`;
+  document.getElementById('parecerArea').innerHTML=`<div class="parecer-box"><div class="parecer-hd">📄 Parecer Técnico Gerado<span style="display:flex;gap:6px"><button class="btn btn-g sm" onclick="copyParecer()">📋 Copiar</button><button class="btn btn-g sm" onclick="downloadText(window._parecerText,'parecer-matricula-${h(im.numero_matricula||'sn')}.txt')">⬇ .txt</button></span></div><div class="parecer-txt">${h(t)}</div></div>`;
+  window._parecerText=t;
+  if(navigate){switchTab('diag');document.getElementById('parecerArea').style.display='';document.getElementById('parecerArea').scrollIntoView({behavior:'smooth',block:'start'});}
+}
+function copyParecer(){if(window._parecerText)copyText(window._parecerText,'Parecer copiado!');}
+
+// ─── TABS, BUSCA, EXPORT, UTILS ───────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-p').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+}
+function onSearch(val){const v=val.trim();document.getElementById('srchCl').style.display=v?'':'none';if(!v){clearHL();return;}applyHL(v);}
+function applyHL(v){
+  const vl=normName(v);
+  document.querySelectorAll('#ownersTb tr[data-nm]').forEach(r=>{
+    const hit=normName(r.dataset.nm).includes(vl);r.classList.toggle('hl-row',hit);
+    if(hit&&r.dataset.grp!==undefined&&!r.classList.contains('group-row'))toggleGroup(r.dataset.grp,true);   // expande o casal onde há match
+  });
+  document.querySelectorAll('.hist-it[data-nm],.snap-ow[data-nm]').forEach(r=>r.classList.toggle('hl-row',normName(r.dataset.nm).includes(vl)));
+}
+function clearHL(){document.querySelectorAll('.hl-row').forEach(el=>el.classList.remove('hl-row'));}
+function clearSearch(){document.getElementById('srchInp').value='';document.getElementById('srchCl').style.display='none';clearHL();}
+function copyText(t,msg){
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(msg,'s');};
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast(msg,'s')).catch(fb);else fb();
+}
+function downloadText(t,name,mime='text/plain'){
+  if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:mime+';charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function exportJSON(){
+  if(!gData)return;
+  downloadText(JSON.stringify(gData,null,2),`matricula-${(gData.imovel?.numero_matricula||'sn').toString().replace(/[^\w.-]/g,'_')}.json`,'application/json');
+  toast('JSON exportado — arraste-o na tela inicial para reabrir sem gastar IA.','s');
+}
+function copyAsText(){
+  if(!gData)return;
+  const d=gData,im=d.imovel||{},owners=d.proprietarios_atuais||[];
+  let t=`ANÁLISE DE MATRÍCULA\n${'='.repeat(40)}\nMatrícula: ${im.numero_matricula||'N/I'}\nCartório: ${im.cartorio||'N/I'}\nÁrea: ${im.area_atual||im.area_original||'N/I'}\n\nPROPRIETÁRIOS ATUAIS\n`;
+  owners.forEach((o,i)=>{t+=`${i+1}. ${o.nome||'N/I'} — ${o.fracao||''} (${fmtPct(o.percentual)})${(o.area_continua||o.area_correspondente)?' — '+(o.area_continua||o.area_correspondente):''}${o.conjuge?` — cônjuge: ${o.conjuge}`:''}\n`;});
+  if(gDiag.length){t+=`\nALERTAS (${gDiag.length})\n`;gDiag.forEach(a=>t+=`[${a.sev==='er'?'CRÍTICO':a.inferencia?'INFERÊNCIA':a.sev==='wn'?'ATENÇÃO':'INFO'}] ${a.titulo}: ${trunc(a.corpo,100)}\n`);}
+  copyText(t,'Resumo copiado!');
+}
+function resetAnalysis(){
+  gFiles=[];gData=null;gDiag=[];gActIdx=-1;
+  document.getElementById('filesList').innerHTML='';
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('upHint').textContent='Selecione um arquivo para continuar';
+  clearSearch();hide('resultsS');hide('loadingS');show('uploadS');switchTab('donos');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toast(msg,type='i'){
+  const mc={i:'al-i',w:'al-w',e:'al-e',s:'al-s'},ic={i:'ℹ️',w:'⚠️',e:'❌',s:'✅'};
+  const el=document.createElement('div');el.className=`toast al ${mc[type]||'al-i'}`;
+  el.innerHTML=`<span class="al-ic">${ic[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},6000);
+}
+function show(id){document.getElementById(id).style.display='';}
+function hide(id){document.getElementById(id).style.display='none';}
+// ─── AI PROMPT (v3 — enxuto) ──────────────────────────────────────────────────
+// Removidos (o JS deriva): parcelas.descricao, parcelas.motivo_comunicacao, snapshot.area_correspondente,
+// imovel.descricao, cadeia.ordem/tipo/percentual, proprietario.como_adquiriu/adquiriu_de.
+const PROMPT=`Você é especialista em Direito Imobiliário e análise de matrículas do Registro de Imóveis brasileiro.
+Analise COMPLETAMENTE a matrícula (todos os atos R e Av, em ordem) e retorne SOMENTE um JSON válido, sem markdown nem texto extra. Textos curtos. Use null para dado ausente; nunca invente. Omita campos opcionais vazios.
+
+{
+  "imovel": {"numero_matricula":"str","cartorio":"str","area_original":"ex: 101,9896 ha | null","area_atual":"ex: 98,4210 ha | null","localizacao":"endereço, município, UF"},
+  "proprietarios_atuais": [
+    {
+      "nome":"str","cpf_cnpj":"str|null",
+      "fracao":"fração TOTAL no imóvel, ex: 1/2","percentual":50.0,
+      "area_correspondente":"ex: 49,2105 ha | null",
+      "ato_referencia":"ex: R-5 ou R-3, R-7",
+      "conjuge":"nome completo | null",
+      "cpf_conjuge":"somente se constar na certidão (opcional)",
+      "regime_bens":"comunhao_parcial|comunhao_universal|separacao_obrigatoria|separacao_convencional|participacao_final|desconhecido|null",
+      "parcelas":[{"fracao_parcela":"ex: 1/4","percentual_parcela":25.0,"area_parcela":"str|null","como_adquiriu":"compra_venda|heranca|doacao|usucapiao|adjudicacao|permuta|dacao_pagamento|arrematacao|partilha|outro","ato_parcela":"ex: R-3","comunica_conjuge":false}]
+    }
+  ],
+  "alertas":[{"tipo":"onus_vigente|lacuna_temporal|soma_incorreta|area_inconsistente|proprietario_sem_cpf|desmembramento_identificado|hipoteca_sem_fracao|heranca_sem_quinhao|penhora_sem_extensao|meacao_presumida","descricao":"1 frase citando o ato (ex: R-4)","criticidade":"alto|medio|info"}],
+  "cadeia_possessoria":[
+    {
+      "ato":"R-1","data":"DD/MM/AAAA|null","natureza":"str",
+      "transmitente":"str|null","adquirente":"str|null","fracao":"str|null","valor":"str|null",
+      "resumo":"1 frase","area_remanescente":"área DESTA matrícula após o ato | null",
+      "evento_area":null,
+      "onus_ativos":[],
+      "snapshot_proprietarios":[{"nome":"str","fracao":"str","percentual":100.0}]
+    }
+  ],
+  "score":{"valor":85,"categoria":"str","fatores_positivos":["máx 3 itens, até 5 palavras"],"fatores_negativos":["máx 3 itens, até 5 palavras"]},
+  "observacoes":"somente se houver algo relevante não coberto acima; senão omitir"
+}
+
+EVENTO_AREA (só quando o ato alterou a área física): {"tipo":"desmembramento|remembramento|retificacao|georreferenciamento|incorporacao|desapropriacao","descricao":"str","area_antes":"str","area_depois":"str","redistribuicao_especificada":true|false,"matriculas_relacionadas":["str"]}
+ONUS_ATIVOS = estado ACUMULADO dos ônus vigentes APÓS cada ato (repita os anteriores não cancelados): {"tipo":"hipoteca|penhora|usufruto|servidao|alienacao_fiduciaria|outros","credor_beneficiario":"str|null","fracao_atingida":"str|null","descricao":"str"}
+
+PARCELAS E MEAÇÃO (obrigatório): todo proprietário tem ≥ 1 parcela; uma por aquisição/natureza distinta; a soma dos percentual_parcela = percentual. Defina comunica_conjuge por estas regras:
+1. COMUNHÃO PARCIAL (padrão pós-1977 sem pacto): oneroso APÓS o casamento → true; gratuito (herança/doação/legado) → false; adquirido ANTES do casamento → false; sub-rogação de bem particular → false.
+2. COMUNHÃO UNIVERSAL: true, exceto cláusula expressa de incomunicabilidade → false.
+3. SEPARAÇÃO (obrigatória/convencional): sempre false.
+4. PARTICIPAÇÃO FINAL NOS AQUESTOS: oneroso pós-casamento → true; gratuito → false.
+5. Se o ato dispuser diferente, prevalece o ato.
+
+CÔNJUGES (crítico): identifique casais pela qualificação ("e sua mulher", "casado com", "casados pelo regime"). Preencha conjuge com nome completo (null se solteiro/viúvo/divorciado). Deduza regime_bens pela data/lei quando não expresso. Se AMBOS os cônjuges são titulares atuais, preencha conjuge nos DOIS.
+
+REGRAS:
+1. Todos os atos em ordem cronológica.
+2. proprietarios_atuais = SOMENTE donos atuais; soma dos percentuais = 100. Não liste "remanescente", "georreferenciamento" ou similares como proprietário.
+3. Herança: cada herdeiro individualmente com sua fração.
+4. snapshot_proprietarios = donos IMEDIATAMENTE APÓS o ato (soma 100). Não informe áreas no snapshot.
+5. redistribuicao_especificada = true só se o ato detalha como a variação se distribui entre condôminos.
+6. score.valor = 100 menos: ônus ativo -15; lacuna >15 anos -7; soma≠100 -20; transmitente inválido -20; penhora+venda -25.
+7. Inclua alerta meacao_presumida (info) quando o cônjuge presumivelmente tem direito mas não consta como titular.
+8. Retorne SOMENTE o JSON.`;
+
+syncUI();
+if(!getGK()&&!getOK()&&!getOAK())setTimeout(openModal,600);
+</script>
+</body>
+</html>
