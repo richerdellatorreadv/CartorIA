@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Analisador de Matrículas de Imóveis</title>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
 :root{
   --p:#1b3a5c;--ph:#244d7a;--pl:#e8f0f8;
@@ -24,6 +25,17 @@
 html{scroll-behavior:smooth}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:15px;line-height:1.6}
 a{color:var(--p)}
+
+
+/* Icon tweaks */
+i.ph, i.ph-fill {
+  font-size: 1.15em;
+  vertical-align: -0.15em;
+}
+.btn i.ph, .btn i.ph-fill {
+  font-size: 1.25em;
+  vertical-align: -0.2em;
+}
 
 /* HEADER */
 .hdr{background:var(--p);color:#fff;padding:0 24px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,0,0,.22)}
@@ -333,7 +345,7 @@ tr.grp-hidden,tr.parc-hidden{display:none}
 <header class="hdr">
   <div class="hdr-i">
     <div class="logo">
-      <div class="logo-ic">⚖️</div>
+      <div class="logo-ic"><i class="ph ph-scales"></i></div>
       <div><div class="logo-tx">Analisador de Matrículas</div><div class="logo-sx">Cadeia Possessória com IA</div></div>
     </div>
     <div class="hdr-r">
@@ -345,19 +357,19 @@ tr.grp-hidden,tr.parc-hidden{display:none}
 
 <div class="ov" id="modal" onclick="onOvClick(event)">
   <div class="modal">
-    <div class="modal-h"><div class="card-t">⚙️ Configurar Provedores de IA</div><button class="btn btn-g" style="padding:3px 8px;font-size:15px" onclick="closeModal()">✕</button></div>
+    <div class="modal-h"><div class="card-t"><i class="ph ph-gear"></i> Configurar Provedores de IA</div><button class="btn btn-g" style="padding:3px 8px;font-size:15px" onclick="closeModal()"><i class="ph ph-x"></i></button></div>
     <div class="modal-b">
-      <div class="al al-i" style="margin-bottom:16px"><span class="al-ic">🔒</span><span>Suas chaves ficam salvas <strong>apenas no seu navegador</strong> — nunca passam por servidores desta aplicação.</span></div>
+      <div class="al al-i" style="margin-bottom:16px"><span class="al-ic"><i class="ph ph-lock"></i></span><span>Suas chaves ficam salvas <strong>apenas no seu navegador</strong> — nunca passam por servidores desta aplicação.</span></div>
       <div class="prov-card" id="card-oai">
-        <div class="prov-hd"><div class="prov-lbl">🟩 OpenAI <span class="prov-badge" style="background:#10a37f;color:#fff">Prioridade 1</span></div><span class="prov-st" id="oai-st">Não configurado</span></div>
+        <div class="prov-hd"><div class="prov-lbl"><i class="ph-fill ph-circle" style="color:var(--ok)"></i> OpenAI <span class="prov-badge" style="background:#10a37f;color:#fff">Prioridade 1</span></div><span class="prov-st" id="oai-st">Não configurado</span></div>
         <div class="fg" style="margin-bottom:0"><label class="fl">API Key — OpenAI</label><input type="password" id="oaiKey" class="fi" placeholder="sk-proj-..." autocomplete="off"/><div class="fh">Acesso direto, estável. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></div></div>
       </div>
       <div class="prov-card" id="card-gem">
-        <div class="prov-hd"><div class="prov-lbl">🤖 Google Gemini <span class="prov-badge badge-p">Prioridade 2</span></div><span class="prov-st" id="gem-st">Não configurado</span></div>
+        <div class="prov-hd"><div class="prov-lbl"><i class="ph-fill ph-robot"></i> Google Gemini <span class="prov-badge badge-p">Prioridade 2</span></div><span class="prov-st" id="gem-st">Não configurado</span></div>
         <div class="fg" style="margin-bottom:0"><label class="fl">API Key — Google AI Studio</label><input type="password" id="gemKey" class="fi" placeholder="Sua chave…" autocomplete="off"/><div class="fh">Gratuito · <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a> → "Create API key"</div></div>
       </div>
       <div class="prov-card" id="card-or">
-        <div class="prov-hd"><div class="prov-lbl">🔀 OpenRouter <span class="prov-badge badge-f">Prioridade 3 / Fallback</span></div><span class="prov-st" id="or-st">Não configurado</span></div>
+        <div class="prov-hd"><div class="prov-lbl"><i class="ph ph-shuffle"></i> OpenRouter <span class="prov-badge badge-f">Prioridade 3 / Fallback</span></div><span class="prov-st" id="or-st">Não configurado</span></div>
         <div class="fg" style="margin-bottom:8px"><label class="fl">API Key — OpenRouter</label><input type="password" id="orKey" class="fi" placeholder="sk-or-v1-…" autocomplete="off"/><div class="fh"><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></div></div>
         <div class="fg" style="margin-bottom:0"><label class="fl">Modelo OpenRouter</label>
           <select id="orModel" class="fs">
@@ -366,16 +378,16 @@ tr.grp-hidden,tr.parc-hidden{display:none}
             <option value="deepseek/deepseek-v4-flash-vision-exp">deepseek/deepseek-v4-flash-vision-exp (DeepSeek V4 Vision)</option>
             <option value="google/gemini-3.8-flash">google/gemini-3.8-flash (Gemini via OpenRouter)</option>
             <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
-            <option value="custom">✏️ Digitar manualmente…</option>
+            <option value="custom"><i class="ph ph-pencil-simple"></i> Digitar manualmente…</option>
           </select>
           <input type="text" id="orModelCustom" class="fi" placeholder="provider/model-name" style="display:none;margin-top:7px;font-family:monospace"/>
         </div>
       </div>
     </div>
     <div class="modal-f">
-      <button class="btn btn-d" id="btnRm" onclick="removeKeys()" style="display:none;margin-right:auto">🗑 Remover tudo</button>
+      <button class="btn btn-d" id="btnRm" onclick="removeKeys()" style="display:none;margin-right:auto"><i class="ph ph-trash"></i> Remover tudo</button>
       <button class="btn btn-g" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-p" onclick="saveKeys()">💾 Salvar</button>
+      <button class="btn btn-p" onclick="saveKeys()"><i class="ph ph-floppy-disk"></i> Salvar</button>
     </div>
   </div>
 </div>
@@ -383,27 +395,27 @@ tr.grp-hidden,tr.parc-hidden{display:none}
 <main class="main">
   <div id="uploadS">
     <div class="card">
-      <div class="card-h"><div class="card-t">📄 Upload da Matrícula</div><span style="font-size:12px;color:var(--tm)">PDF, JPG, PNG, WEBP · ou JSON de análise anterior</span></div>
+      <div class="card-h"><div class="card-t"><i class="ph ph-file-text"></i> Upload da Matrícula</div><span style="font-size:12px;color:var(--tm)">PDF, JPG, PNG, WEBP · ou JSON de análise anterior</span></div>
       <div class="card-b">
         <div class="up-area" id="upArea">
           <input type="file" id="fileInp" accept=".pdf,image/jpeg,image/png,image/webp,.json,application/json" multiple/>
-          <div class="up-ic">📂</div>
+          <div class="up-ic"><i class="ph ph-folder-open"></i></div>
           <div style="font-size:15px;font-weight:700;margin-bottom:5px">Arraste a matrícula aqui ou clique para selecionar</div>
           <div style="font-size:13px;color:var(--tm)">PDF (múltiplas páginas), JPG, PNG ou WEBP · Máx. 20 MB<br/>Também aceita um <strong>.json</strong> exportado por este sistema (reabre sem consumir IA)</div>
         </div>
         <div class="files" id="filesList"></div>
         <div style="margin-top:20px;display:flex;gap:11px;justify-content:flex-end;align-items:center">
           <span style="font-size:13px;color:var(--tm)" id="upHint">Selecione um arquivo para continuar</span>
-          <button class="btn btn-p btn-lg" id="analyzeBtn" onclick="startAnalysis()" disabled>🔍 Analisar Matrícula</button>
+          <button class="btn btn-p btn-lg" id="analyzeBtn" onclick="startAnalysis()" disabled><i class="ph ph-magnifying-glass"></i> Analisar Matrícula</button>
         </div>
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="card-h"><div class="card-t" style="font-weight:600;color:var(--ts)">ℹ️ Como usar</div></div>
+      <div class="card-h"><div class="card-t" style="font-weight:600;color:var(--ts)"><i class="ph-fill ph-info"></i> Como usar</div></div>
       <div class="card-b" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
-        <div><div style="font-size:20px;margin-bottom:4px">🔑</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">1. Configure a IA</div><div style="font-size:12.5px;color:var(--tm)">Configure sua chave de API. OpenAI, Gemini ou OpenRouter — pelo menos um.</div></div>
-        <div><div style="font-size:20px;margin-bottom:4px">📄</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">2. Envie a matrícula</div><div style="font-size:12.5px;color:var(--tm)">PDF de múltiplas páginas ou imagens. A IA lê todos os atos.</div></div>
-        <div><div style="font-size:20px;margin-bottom:4px">🔬</div><div style="font-weight:700;margin-bottom:3px;font-size:14px">3. Análise Crítica</div><div style="font-size:12.5px;color:var(--tm)">Veja o score de regularidade e os alertas de inconsistência na aba Diagnóstico.</div></div>
+        <div><div style="font-size:20px;margin-bottom:4px"><i class="ph ph-key"></i></div><div style="font-weight:700;margin-bottom:3px;font-size:14px">1. Configure a IA</div><div style="font-size:12.5px;color:var(--tm)">Configure sua chave de API. OpenAI, Gemini ou OpenRouter — pelo menos um.</div></div>
+        <div><div style="font-size:20px;margin-bottom:4px"><i class="ph ph-file-text"></i></div><div style="font-weight:700;margin-bottom:3px;font-size:14px">2. Envie a matrícula</div><div style="font-size:12.5px;color:var(--tm)">PDF de múltiplas páginas ou imagens. A IA lê todos os atos.</div></div>
+        <div><div style="font-size:20px;margin-bottom:4px"><i class="ph ph-microscope"></i></div><div style="font-weight:700;margin-bottom:3px;font-size:14px">3. Análise Crítica</div><div style="font-size:12.5px;color:var(--tm)">Veja o score de regularidade e os alertas de inconsistência na aba Diagnóstico.</div></div>
       </div>
     </div>
   </div>
@@ -414,13 +426,13 @@ tr.grp-hidden,tr.parc-hidden{display:none}
         <div class="spinner"></div>
         <div class="ld-tx" id="ldTx">Analisando a matrícula com IA…</div>
         <div class="steps">
-          <div class="step" id="s1">📤 Enviando documento</div>
-          <div class="step" id="s2">🔍 Identificando atos registrais</div>
-          <div class="step" id="s3">👥 Mapeando cadeia possessória</div>
-          <div class="step" id="s4">📐 Calculando áreas e frações</div>
-          <div class="step" id="s5">⚠️ Verificando ônus e alertas</div>
-          <div class="step" id="s6">🔬 Executando análise crítica</div>
-          <div class="step" id="s7">✅ Estruturando resultado</div>
+          <div class="step" id="s1"><i class="ph ph-upload-simple"></i> Enviando documento</div>
+          <div class="step" id="s2"><i class="ph ph-magnifying-glass"></i> Identificando atos registrais</div>
+          <div class="step" id="s3"><i class="ph ph-users"></i> Mapeando cadeia possessória</div>
+          <div class="step" id="s4"><i class="ph ph-ruler"></i> Calculando áreas e frações</div>
+          <div class="step" id="s5"><i class="ph-fill ph-warning" style="color:inherit"></i> Verificando ônus e alertas</div>
+          <div class="step" id="s6"><i class="ph ph-microscope"></i> Executando análise crítica</div>
+          <div class="step" id="s7"><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> Estruturando resultado</div>
         </div>
       </div>
     </div>
@@ -432,28 +444,28 @@ tr.grp-hidden,tr.parc-hidden{display:none}
 
     <div class="act-bar">
       <div class="act-l">
-        <button class="btn btn-g" onclick="resetAnalysis()">⬅ Nova Análise</button>
-        <button class="btn btn-g" onclick="window.print()">🖨 Imprimir</button>
-        <button class="btn btn-g" onclick="copyAsText()">📋 Copiar Resumo</button>
-        <button class="btn btn-g" onclick="gerarParecer(true)">📄 Gerar Parecer</button>
-        <button class="btn btn-g" onclick="exportJSON()" title="Salva a análise para reabrir depois sem gastar IA">⬇ Exportar JSON</button>
+        <button class="btn btn-g" onclick="resetAnalysis()"><i class="ph ph-arrow-left"></i> Nova Análise</button>
+        <button class="btn btn-g" onclick="window.print()"><i class="ph ph-printer"></i> Imprimir</button>
+        <button class="btn btn-g" onclick="copyAsText()"><i class="ph ph-clipboard-text"></i> Copiar Resumo</button>
+        <button class="btn btn-g" onclick="gerarParecer(true)"><i class="ph ph-file-text"></i> Gerar Parecer</button>
+        <button class="btn btn-g" onclick="exportJSON()" title="Salva a análise para reabrir depois sem gastar IA"><i class="ph ph-download-simple"></i> Exportar JSON</button>
       </div>
       <span style="font-size:11.5px;color:var(--tm)" id="analysisTs"></span>
     </div>
 
     <div class="srch-wrap">
-      <span class="srch-ic">🔍</span>
+      <span class="srch-ic"><i class="ph ph-magnifying-glass"></i></span>
       <input type="text" id="srchInp" class="srch-i" placeholder="Buscar pessoa em todos os atos…" oninput="onSearch(this.value)"/>
-      <button class="srch-cl" id="srchCl" onclick="clearSearch()">✕</button>
+      <button class="srch-cl" id="srchCl" onclick="clearSearch()"><i class="ph ph-x"></i></button>
     </div>
 
     <div class="card">
       <div class="card-b" style="padding-bottom:0">
         <div class="tabs">
-          <div class="tab active" id="tab-donos" onclick="switchTab('donos')">👥 Proprietários <span class="tab-bdg" id="bdg-donos">0</span></div>
-          <div class="tab" id="tab-tl" onclick="switchTab('tl')">⏱️ Linha do Tempo <span class="tab-bdg" id="bdg-tl">0</span></div>
-          <div class="tab" id="tab-hist" onclick="switchTab('hist')">📋 Todos os Atos</div>
-          <div class="tab" id="tab-diag" onclick="switchTab('diag')">🔬 Diagnóstico <span class="tab-bdg er" id="bdg-diag" style="display:none">!</span></div>
+          <div class="tab active" id="tab-donos" onclick="switchTab('donos')"><i class="ph ph-users"></i> Proprietários <span class="tab-bdg" id="bdg-donos">0</span></div>
+          <div class="tab" id="tab-tl" onclick="switchTab('tl')"><i class="ph ph-clock"></i> Linha do Tempo <span class="tab-bdg" id="bdg-tl">0</span></div>
+          <div class="tab" id="tab-hist" onclick="switchTab('hist')"><i class="ph ph-clipboard-text"></i> Todos os Atos</div>
+          <div class="tab" id="tab-diag" onclick="switchTab('diag')"><i class="ph ph-microscope"></i> Diagnóstico <span class="tab-bdg er" id="bdg-diag" style="display:none">!</span></div>
         </div>
       </div>
       <div class="card-b">
@@ -467,8 +479,8 @@ tr.grp-hidden,tr.parc-hidden{display:none}
                 <button class="btn btn-g sm" onclick="setAllGroups(false)" title="Recolher todos os casais">⊟ Recolher</button>
                 <span style="width:1px;height:18px;background:var(--bd);margin:0 4px"></span>
               </span>
-              <button class="btn btn-g sm" id="btnViewGroup" onclick="setOwnerView('group')">👫 Agrupado</button>
-              <button class="btn btn-g sm" id="btnViewInd" onclick="setOwnerView('individual')">👤 Individual</button>
+              <button class="btn btn-g sm" id="btnViewGroup" onclick="setOwnerView('group')"><i class="ph ph-users-three"></i> Agrupado</button>
+              <button class="btn btn-g sm" id="btnViewInd" onclick="setOwnerView('individual')"><i class="ph ph-user"></i> Individual</button>
             </div>
           </div>
           <div class="tbl-wrap">
@@ -490,7 +502,7 @@ tr.grp-hidden,tr.parc-hidden{display:none}
             </div>
           </div>
           <div id="snapContent">
-            <div class="snap-empty"><div class="snap-empty-ic">👆</div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>
+            <div class="snap-empty"><div class="snap-empty-ic"><i class="ph-fill ph-hand-pointing"></i></div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>
           </div>
         </div>
 
@@ -499,7 +511,7 @@ tr.grp-hidden,tr.parc-hidden{display:none}
         <div class="tab-p" id="panel-diag">
           <div class="diag-header">
             <div class="diag-score-big" id="scoreBlock"></div>
-            <button class="btn btn-g" onclick="toggleParecer()">📄 Gerar Parecer</button>
+            <button class="btn btn-g" onclick="toggleParecer()"><i class="ph ph-file-text"></i> Gerar Parecer</button>
           </div>
           <div id="parecerArea" style="display:none"></div>
           <div class="diag-cats" id="diagCats"></div>
@@ -632,12 +644,12 @@ function removeKeys(){
 function syncUI(){
   const hG=!!getGK(),hO=!!getOK(),hOai=!!getOAK(),hA=hG||hO||hOai;
   document.getElementById('apiDot').classList.toggle('ok',hA);
-  document.getElementById('apiLabel').textContent=hA?'⚙️ Provedores':'Configurar IA';
+  document.getElementById('apiLabel').textContent=hA?'<i class="ph ph-gear"></i> Provedores':'Configurar IA';
   const pill=document.getElementById('provPill');
   pill.style.display=hA?'':'none';
-  pill.textContent=hOai?'🟩 OpenAI':hG?'🤖 Gemini':'🔀 OpenRouter';
+  pill.textContent=hOai?'<i class="ph-fill ph-circle" style="color:var(--ok)"></i> OpenAI':hG?'<i class="ph-fill ph-robot"></i> Gemini':'<i class="ph ph-shuffle"></i> OpenRouter';
   document.getElementById('btnRm').style.display=hA?'inline-flex':'none';
-  const setSt=(id,card,on)=>{const e=document.getElementById(id);if(!e)return;e.textContent=on?'✓ Configurado':'Não configurado';e.className='prov-st'+(on?' ok':'');document.getElementById(card).classList.toggle('active-p',on);};
+  const setSt=(id,card,on)=>{const e=document.getElementById(id);if(!e)return;e.textContent=on?'<i class="ph ph-check"></i> Configurado':'Não configurado';e.className='prov-st'+(on?' ok':'');document.getElementById(card).classList.toggle('active-p',on);};
   setSt('gem-st','card-gem',hG);setSt('or-st','card-or',hO);setSt('oai-st','card-oai',hOai);
 }
 function openModal(){
@@ -675,22 +687,22 @@ function addFiles(inc){
   }
   renderFiles();
 }
-// Reabre uma análise exportada (⬇ Exportar JSON) sem consumir IA
+// Reabre uma análise exportada (<i class="ph ph-download-simple"></i> Exportar JSON) sem consumir IA
 function importJSON(f){
   f.text().then(t=>{
     try{
       const d=JSON.parse(t);
       if(!d||typeof d!=='object'||(!d.proprietarios_atuais&&!d.cadeia_possessoria))throw new Error();
-      hide('uploadS');renderAll(d,'📂 JSON importado'+(d._meta?.provider?' (origem: '+d._meta.provider+')':''));
+      hide('uploadS');renderAll(d,'<i class="ph ph-folder-open"></i> JSON importado'+(d._meta?.provider?' (origem: '+d._meta.provider+')':''));
     }catch{toast('JSON inválido ou não reconhecido.','e');}
   });
 }
 function removeFile(i){gFiles.splice(i,1);renderFiles();}
 function renderFiles(){
   document.getElementById('filesList').innerHTML=gFiles.map((f,i)=>`
-    <div class="fchip"><span class="fchip-ic">${f.type==='application/pdf'?'📄':'🖼️'}</span>
+    <div class="fchip"><span class="fchip-ic">${f.type==='application/pdf'?'<i class="ph ph-file-text"></i>':'<i class="ph ph-image"></i>'}</span>
     <div class="fchip-i"><div class="fchip-n">${h(f.name)}</div><div class="fchip-s">${fmtSz(f.size)}</div></div>
-    <button class="fchip-rm" onclick="removeFile(${i})">✕</button></div>`).join('');
+    <button class="fchip-rm" onclick="removeFile(${i})"><i class="ph ph-x"></i></button></div>`).join('');
   document.getElementById('analyzeBtn').disabled=gFiles.length===0;
   document.getElementById('upHint').textContent=gFiles.length?`${gFiles.length} arquivo(s) selecionado(s)`:'Selecione um arquivo para continuar';
 }
@@ -704,22 +716,22 @@ async function startAnalysis(){
 
   // Prioridade: OpenAI -> Gemini -> OpenRouter
   if(oak){
-    try{const content=await buildORContent();const res=await callOpenAI(oak,content);renderAll(res,'🟩 OpenAI (gpt-4o)');return;}
+    try{const content=await buildORContent();const res=await callOpenAI(oak,content);renderAll(res,'<i class="ph-fill ph-circle" style="color:var(--ok)"></i> OpenAI (gpt-4o)');return;}
     catch(err){
       if(!gk&&!ok){failBack(`OpenAI: ${err.message}`);return;}
       toast(`OpenAI: ${h(err.message)} — tentando próximo…`,'w');
     }
   }
   if(gk){
-    try{const parts=await buildGParts();const res=await callGemini(gk,parts);renderAll(res,'🤖 Gemini');return;}
+    try{const parts=await buildGParts();const res=await callGemini(gk,parts);renderAll(res,'<i class="ph-fill ph-robot"></i> Gemini');return;}
     catch(err){
       const ol=/alta demanda|429|503/.test(err.message);
       if(!ok){failBack(err.message);return;}
-      toast(ol?'⚡ Gemini sobrecarregado — tentando OpenRouter…':`Gemini: ${h(err.message)} — tentando OpenRouter…`,'w');
+      toast(ol?'<i class="ph-fill ph-lightning" style="color:inherit"></i> Gemini sobrecarregado — tentando OpenRouter…':`Gemini: ${h(err.message)} — tentando OpenRouter…`,'w');
     }
   }
   if(ok){
-    try{const content=await buildORContent();const res=await callOR(ok,getMdl(),content);renderAll(res,`🔀 ${getMdl().split('/').pop()}`);}
+    try{const content=await buildORContent();const res=await callOR(ok,getMdl(),content);renderAll(res,`<i class="ph ph-shuffle"></i> ${getMdl().split('/').pop()}`);}
     catch(err){failBack(`OpenRouter: ${err.message}`);}
   }
 }
@@ -768,7 +780,7 @@ function parseModelJSON(t,finishReason,provider){
   try{return JSON.parse(t);}catch{
     const cut=finishReason==='length'||finishReason==='MAX_TOKENS';
     if(cut){
-      toast('⚠️ Resposta cortada — recuperando dados parciais…','w');
+      toast('<i class="ph-fill ph-warning" style="color:inherit"></i> Resposta cortada — recuperando dados parciais…','w');
       const rec=tryRecoverJSON(t);if(rec)return rec;
       throw new Error(`${provider}: JSON cortado irrecuperável. Tente PDF menor ou modelo com mais contexto.`);
     }
@@ -872,7 +884,7 @@ function runOfflineVerification(data){
   // 1. Soma das frações dos proprietários atuais
   const totalPct=owners.reduce((s,o)=>s+pctOf(o.percentual),0);
   if(owners.length&&Math.abs(totalPct-100)>0.5){
-    items.push({cat:'propriedade',sev:'er',ato:null,src:'⚙️ Sistema',
+    items.push({cat:'propriedade',sev:'er',ato:null,src:'<i class="ph ph-gear"></i> Sistema',
       titulo:'Soma das frações ≠ 100%',
       corpo:`Os proprietários atuais totalizam ${totalPct.toFixed(2)}% (esperado: 100%). Possível erro de lançamento ou fração não registrada.`,
       calc:owners.map(o=>`${o.nome||'?'}: ${o.fracao||'?'} = ${pctOf(o.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${totalPct.toFixed(2)}%`
@@ -884,7 +896,7 @@ function runOfflineVerification(data){
     if(!o.parcelas.length)continue;
     const sp=o.parcelas.reduce((s,p)=>s+pctOf(p.percentual_parcela),0),op=pctOf(o.percentual);
     if(op>0&&Math.abs(sp-op)>0.5){
-      items.push({cat:'propriedade',sev:'wn',ato:o.ato_referencia||null,src:'⚙️ Sistema',
+      items.push({cat:'propriedade',sev:'wn',ato:o.ato_referencia||null,src:'<i class="ph ph-gear"></i> Sistema',
         titulo:`Parcelas de ${o.nome} não fecham com a fração total`,
         corpo:`As parcelas somam ${sp.toFixed(2)}% mas o percentual declarado é ${op.toFixed(2)}%. O cálculo de meação foi normalizado proporcionalmente; conferir a decomposição das aquisições.`,
         calc:o.parcelas.map(p=>`${p.ato_parcela||'?'} ${aqLabel(p.como_adquiriu)}: ${pctOf(p.percentual_parcela).toFixed(2)}%`).join('\n')+`\nSOMA: ${sp.toFixed(2)}% · DECLARADO: ${op.toFixed(2)}%`
@@ -903,7 +915,7 @@ function runOfflineVerification(data){
         const esperado=areaAtualNum*(pct/100);
         const diff=Math.abs(areaOwner-esperado)/esperado;
         if(diff>0.05){
-          items.push({cat:'area',sev:'er',ato:o.ato_referencia,src:'⚙️ Sistema',
+          items.push({cat:'area',sev:'er',ato:o.ato_referencia,src:'<i class="ph ph-gear"></i> Sistema',
             titulo:`Área de ${o.nome||'?'} inconsistente com a fração`,
             corpo:`A fração ${o.fracao||pct+'%'} de uma área de ${areaAtualStr} deveria corresponder a ~${fmtArea(esperado)}, mas consta ${o.area_correspondente}.`,
             calc:`Área total: ${areaAtualStr} = ${fmtArea(areaAtualNum)}\nFração: ${pct}% → esperado: ${fmtArea(esperado)}\nDeclarado: ${o.area_correspondente} (diferença: ${(diff*100).toFixed(1)}%)`
@@ -922,7 +934,7 @@ function runOfflineVerification(data){
     if(snap.length>0){
       const snapTotal=snap.reduce((s,p)=>s+pctOf(p.percentual),0);
       if(Math.abs(snapTotal-100)>0.5){
-        items.push({cat:'propriedade',sev:'er',ato:act.ato,src:'⚙️ Sistema',
+        items.push({cat:'propriedade',sev:'er',ato:act.ato,src:'<i class="ph ph-gear"></i> Sistema',
           titulo:`Snapshot de ${act.ato}: soma das frações ≠ 100%`,
           corpo:`Logo após ${act.ato}, os proprietários totalizam ${snapTotal.toFixed(2)}% — impossível juridicamente.`,
           calc:snap.map(p=>`${p.nome||'?'}: ${pctOf(p.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${snapTotal.toFixed(2)}%`
@@ -948,7 +960,7 @@ function runOfflineVerification(data){
         const absDelta=Math.abs(delta/antes);
         const rotulo=/retifica/.test(nat)||evTipo==='retificacao'?'Retificação':'Georreferenciamento';
         const grande=absDelta>0.05;
-        items.push({cat:'area',sev:grande?'er':'wn',ato:act.ato,src:'🔍 Inferência',inferencia:true,calc,
+        items.push({cat:'area',sev:grande?'er':'wn',ato:act.ato,src:'<i class="ph ph-magnifying-glass"></i> Inferência',inferencia:true,calc,
           titulo:grande?`${act.ato}: ${rotulo} com variação acima do limite legal (${Math.abs(pctVar).toFixed(2)}% > 5%)`:`${act.ato}: ${rotulo} alterou a área — distribuição não especificada`,
           corpo:grande?`Variação de ${Math.abs(pctVar).toFixed(2)}% na área. Retificações unilaterais admitem até 5%. O sistema inferiu distribuição proporcional entre os condôminos pois o ato não especificou.`
                       :`O ato alterou a área sem especificar a redistribuição entre os ${snap.length} condôminos. O sistema inferiu distribuição proporcional à fração preexistente. Verificar se há instrumento complementar.`
@@ -962,7 +974,7 @@ function runOfflineVerification(data){
       if(ab>0&&dp>0){
         const diff=Math.abs(dp-ab)/ab;
         if(diff>0.05){
-          items.push({cat:'area',sev:'er',ato:act.ato,src:'⚙️ Sistema',
+          items.push({cat:'area',sev:'er',ato:act.ato,src:'<i class="ph ph-gear"></i> Sistema',
             titulo:`${act.ato}: Retificação de área acima do limite legal (${(diff*100).toFixed(1)}% > 5%)`,
             corpo:`Variação de ${(diff*100).toFixed(1)}% excede o limite de 5% para retificações unilaterais (Lei 10.267/2001). Exige anuência dos confrontantes ou processo judicial/administrativo.`,
             calc:`Antes: ${act.evento_area.area_antes}\nDepois: ${act.evento_area.area_depois}\nVariação: ${(diff*100).toFixed(1)}%\nLimite legal: 5%`
@@ -978,7 +990,7 @@ function runOfflineVerification(data){
       const temFracao=/fra[çc][aã]o|parte|%|\d\s*\/\s*\d|metade|quota|cota|integral|totalidade/.test(descL);
       if(!temFracao&&snap.length>1&&['hipoteca','penhora','alienacao_fiduciaria'].includes(on.tipo)){
         const tl=on.tipo.replace(/_/g,' ');
-        items.push({cat:'onus',sev:'er',ato:act.ato,src:'🔍 Inferência',inferencia:true,
+        items.push({cat:'onus',sev:'er',ato:act.ato,src:'<i class="ph ph-magnifying-glass"></i> Inferência',inferencia:true,
           titulo:`${act.ato}: ${tl} sem fração especificada — condôminos existentes`,
           corpo:`O ato de ${tl} não especifica a fração atingida. Há ${snap.length} condôminos. Verificar se o ônus recai sobre a fração do devedor ou sobre a totalidade (o que exigiria anuência dos demais).`,
           calc:`Credora/Beneficiária: ${on.credor_beneficiario||'não informado'}\nCondôminos no momento:\n`+snap.map(p=>`${p.nome}: ${p.fracao||pctOf(p.percentual)+'%'}`).join('\n')
@@ -990,12 +1002,12 @@ function runOfflineVerification(data){
     if(i>0&&act.data&&chain[i-1].data){
       const d1=parseDMY(chain[i-1].data),d2=parseDMY(act.data);
       if(d1&&d2){const anos=(d2-d1)/(1000*60*60*24*365.25);
-        if(anos>15)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'⚙️ Sistema',
+        if(anos>15)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'<i class="ph ph-gear"></i> Sistema',
           titulo:`Lacuna de ${Math.floor(anos)} anos entre ${chain[i-1].ato} e ${act.ato}`,
           corpo:`Intervalo de ${Math.floor(anos)} anos sem atos registrados. Verificar se há atos não constantes na certidão ou se houve período sem movimentação.`,
           calc:`${chain[i-1].ato}: ${chain[i-1].data}\n${act.ato}: ${act.data}\nDiferença: ${Math.floor(anos)} anos`
         });
-        if(anos<0)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'⚙️ Sistema',
+        if(anos<0)items.push({cat:'temporal',sev:'wn',ato:act.ato,src:'<i class="ph ph-gear"></i> Sistema',
           titulo:`${act.ato} datado antes de ${chain[i-1].ato}`,
           corpo:`A data de ${act.ato} (${act.data}) é anterior à do ato precedente (${chain[i-1].data}). Possível erro de leitura da IA ou de lançamento.`,calc:null});
       }
@@ -1005,7 +1017,7 @@ function runOfflineVerification(data){
   // 4. Área atual ≠ área original sem evento de área
   const areaOrigStr=im.area_original||'',areaOrigNum=parseAreaToM2(areaOrigStr);
   if(areaOrigNum>0&&areaAtualNum>0&&Math.abs(areaAtualNum-areaOrigNum)>1&&!chain.some(a=>a.evento_area)){
-    items.push({cat:'area',sev:'er',ato:null,src:'⚙️ Sistema',
+    items.push({cat:'area',sev:'er',ato:null,src:'<i class="ph ph-gear"></i> Sistema',
       titulo:'Área mudou sem ato de retificação/desmembramento identificado',
       corpo:`Área original: ${areaOrigStr} → Área atual: ${areaAtualStr}. Nenhum ato de desmembramento, remembramento ou retificação foi encontrado na cadeia. Possível omissão na certidão ou erro de lançamento.`,
       calc:`Área original: ${areaOrigStr}\nÁrea atual: ${areaAtualStr}\nDiferença: ${fmtArea(areaAtualNum-areaOrigNum)}`
@@ -1017,7 +1029,7 @@ function runOfflineVerification(data){
   const onusFinais=(last?.onus_ativos||[]).filter(o=>o&&o.tipo);
   const iaTemOnus=(data.alertas||[]).some(a=>a.tipo==='onus_vigente');
   if(onusFinais.length&&!iaTemOnus){
-    items.push({cat:'onus',sev:'er',ato:last.ato,src:'⚙️ Sistema',
+    items.push({cat:'onus',sev:'er',ato:last.ato,src:'<i class="ph ph-gear"></i> Sistema',
       titulo:`${onusFinais.length} ônus vigente(s) após o último ato`,
       corpo:onusFinais.map(o=>`${o.tipo.replace(/_/g,' ')}${o.credor_beneficiario?' — '+o.credor_beneficiario:''}`).join('; ')+'.',calc:null});
   }
@@ -1025,7 +1037,7 @@ function runOfflineVerification(data){
   // 6. Fusionar com alertas da IA
   const iaAlertas=(data.alertas||[]).map(a=>({
     cat:mapAlertaToCat(a.tipo),sev:mapCriticidadeToSev(a.criticidade),
-    ato:extractAto(a.descricao,chain),src:'🧠 IA',
+    ato:extractAto(a.descricao,chain),src:'<i class="ph-fill ph-brain"></i> IA',
     titulo:mapAlertaTitulo(a.tipo),corpo:a.descricao||'',calc:null
   }));
   return [...iaAlertas,...items];
@@ -1060,10 +1072,23 @@ function applyContinuity(data){
   const im=data.imovel||{};
   let curM2=parseAreaToM2(im.area_original||'');
   (data.cadeia_possessoria||[]).forEach(act=>{
+    // Guarda a área ANTES de qualquer alteração deste ato
+    const areaBeforeAct=curM2;
+    // Atualiza curM2 DEPOIS de registrar a área do ato — assim o snapshot do próprio ato usa a área anterior
     if(act.evento_area&&act.evento_area.area_depois){const n=parseAreaToM2(act.evento_area.area_depois);if(n>0)curM2=n;}
     else if(act.area_remanescente){const n=parseAreaToM2(act.area_remanescente);if(n>0)curM2=n;}
+    // _area_m2 armazena a área VIGENTE após o ato (para os atos subsequentes)
     act._area_m2=curM2;
-    (act.snapshot_proprietarios||[]).forEach(p=>{const pct=pctOf(p.percentual);if(pct>0&&curM2>0)p.area_calc=fmtArea(curM2*(pct/100));});
+    // _area_snap_m2 armazena a área usada no SNAPSHOT deste ato:
+    // - Se é um ato que alterou a área, o snapshot mostra a área que estava vigente ANTES da alteração
+    // - Para todos os outros atos, é igual à área vigente após o ato
+    const isAreaChange=!!(act.evento_area&&act.evento_area.area_depois)||
+                       !!(act.area_remanescente&&parseAreaToM2(act.area_remanescente)!==areaBeforeAct);
+    act._area_snap_m2=isAreaChange?areaBeforeAct:curM2;
+    (act.snapshot_proprietarios||[]).forEach(p=>{
+      const pct=pctOf(p.percentual);
+      if(pct>0&&act._area_snap_m2>0)p.area_calc=fmtArea(act._area_snap_m2*(pct/100));
+    });
   });
   const finalM2=parseAreaToM2(im.area_atual||'')||curM2;
   if(finalM2>0){
@@ -1095,7 +1120,7 @@ function renderAll(data,provLabel){
   renderTimeline(gData.cadeia_possessoria,gDiag);
   renderHist(gData.cadeia_possessoria);
   renderDiag(gData,gDiag);
-  document.getElementById('snapContent').innerHTML=`<div class="snap-empty"><div class="snap-empty-ic">👆</div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>`;
+  document.getElementById('snapContent').innerHTML=`<div class="snap-empty"><div class="snap-empty-ic"><i class="ph-fill ph-hand-pointing"></i></div><div style="font-size:14px;line-height:1.5;color:var(--tm)">Clique em um ato na linha do tempo acima<br/>para ver o snapshot detalhado daquele momento</div></div>`;
   document.getElementById('parecerArea').style.display='none';
   document.getElementById('bdg-donos').textContent=gData.proprietarios_atuais.length;
   document.getElementById('bdg-tl').textContent=gData.cadeia_possessoria.length;
@@ -1113,7 +1138,7 @@ function scoreInfo(data,diag){
   if(isNaN(val))val=100-erCount*15-wnCount*7;
   val=Math.round(Math.max(0,Math.min(100,val)));
   const cat=val>=90?'Regular':val>=70?'Regular com ressalvas':val>=50?'Irregular com ressalvas':'Irregular';
-  const icon=val>=90?'✅':val>=70?'🟡':val>=50?'🟠':'🔴';
+  const icon=val>=90?'<i class="ph-fill ph-check-circle" style="color:var(--ok)"></i>':val>=70?'<i class="ph-fill ph-warning" style="color:var(--wn)"></i>':val>=50?'<i class="ph-fill ph-warning-circle" style="color:#e67e22"></i>':'<i class="ph-fill ph-warning-circle" style="color:var(--er)"></i>';
   const col=val>=90?'var(--ok)':val>=70?'var(--wn)':val>=50?'#c05a00':'var(--er)';
   const dc=val>=90?'dc-ok':val>=70?'dc-wn':'dc-er';
   return{val,cat,icon,col,dc,erCount,wnCount};
@@ -1127,29 +1152,29 @@ function renderDash(data,diag){
   const nC=groupOwners(owners).filter(g=>g.isGroup).length;
   document.getElementById('dash').innerHTML=`
     <div class="dc">
-      <div class="dc-lbl">🏠 Matrícula</div>
+      <div class="dc-lbl"><i class="ph ph-house"></i> Matrícula</div>
       <div class="dc-val">Nº ${h(im.numero_matricula)||'—'}</div>
       <div class="dc-sub">${h(im.cartorio)||'—'}</div>
       <div class="dc-sub" style="font-size:10px;margin-top:2px">${h(im.localizacao)}</div>
     </div>
     <div class="dc clickable" onclick="switchTab('donos')" title="Ver proprietários">
-      <div class="dc-lbl">👥 Proprietários</div>
+      <div class="dc-lbl"><i class="ph ph-users"></i> Proprietários</div>
       <div class="dc-val">${owners.length}</div>
       <div class="dc-sub">${pcts||'—'}</div>
-      ${nC?`<div class="dc-sub" style="font-size:10px">👫 ${nC} unidade(s) familiar(es)</div>`:''}
+      ${nC?`<div class="dc-sub" style="font-size:10px"><i class="ph ph-users-three"></i> ${nC} unidade(s) familiar(es)</div>`:''}
     </div>
     <div class="dc ${areaChanged?'dc-wn':''}">
-      <div class="dc-lbl">📐 Área</div>
+      <div class="dc-lbl"><i class="ph ph-ruler"></i> Área</div>
       <div class="dc-val" style="${areaChanged?'color:var(--wn)':''}">${h(im.area_atual||im.area_original)||'—'}</div>
       <div class="dc-sub">${areaChanged?`↘ de ${h(im.area_original)}`:im.area_original?`Original: ${h(im.area_original)}`:'Não informada'}</div>
     </div>
     <div class="dc ${s.erCount>0?'dc-er':s.wnCount>0?'dc-wn':''} clickable" onclick="switchTab('diag')" title="Ver diagnóstico">
-      <div class="dc-lbl">⚠️ Alertas</div>
+      <div class="dc-lbl"><i class="ph-fill ph-warning" style="color:inherit"></i> Alertas</div>
       <div class="dc-val">${diag.length}</div>
       <div class="dc-sub">${s.erCount?`${s.erCount} crítico(s)`:s.wnCount?`${s.wnCount} atenção`:'Nenhum crítico'}</div>
     </div>
     <div class="dc ${s.dc} clickable" onclick="switchTab('diag')" title="Ver diagnóstico">
-      <div class="dc-lbl">🔬 Regularidade</div>
+      <div class="dc-lbl"><i class="ph ph-microscope"></i> Regularidade</div>
       <div class="dc-val" style="font-size:17px;color:${s.col}">${s.val}/100</div>
       <div class="score-bar"><div class="score-fill" style="width:${s.val}%;background:${s.col}"></div></div>
       <div class="dc-sub" style="margin-top:4px">${s.icon} ${s.cat}</div>
@@ -1162,7 +1187,7 @@ function renderSmartAlerts(diag){
   if(!criticos.length){el.innerHTML='';return;}
   el.innerHTML=`<div class="smart-alerts">${criticos.map(d=>`
     <div class="sm-al alto">
-      <span style="flex-shrink:0">🔴</span>
+      <span style="flex-shrink:0"><i class="ph-fill ph-warning-circle" style="color:var(--er)"></i></span>
       <span><strong>${h(d.titulo)}</strong>${d.ato?' <span class="sm-src">['+h(d.ato)+']</span>':''} — ${h(trunc(d.corpo,120))}</span>
     </div>`).join('')}</div>`;
 }
@@ -1235,7 +1260,7 @@ function parcelaRows(m,togId,grp,indent,extraCol){
     const tr=findAct(p.ato_parcela);
     return `<tr class="parc-detail parc-hidden" data-parc="${togId}"${grp!==null?` data-grp="${grp}"`:''}>
       <td></td>
-      <td style="padding-left:${indent}px"><span style="color:var(--tm);margin-right:3px">⤷</span>${h(aqLabel(p.como_adquiriu))||'Aquisição'}${tr?.data?` <span style="color:var(--tm)">· ${h(tr.data)}</span>`:''}</td>
+      <td style="padding-left:${indent}px"><span style="color:var(--tm);margin-right:3px"><i class="ph ph-arrow-u-down-right"></i></span>${h(aqLabel(p.como_adquiriu))||'Aquisição'}${tr?.data?` <span style="color:var(--tm)">· ${h(tr.data)}</span>`:''}</td>
       <td>—</td>
       <td style="font-weight:700;color:var(--p)">${h(fmtFracao(p.fracao_parcela))||'—'}</td>
       <td>${fmtPct(p.percentual_parcela)}</td>
@@ -1262,7 +1287,7 @@ function spouseRow(m,split,opts){
     <td></td>
     <td class="${nameCls}"><div style="display:flex;align-items:flex-start"><span class="sub-ic">↳</span>
       <div><div class="ow-name" style="color:${SP_COL};font-size:13px">${h(m.conjuge)} <span style="font-size:9px;color:var(--inf);font-weight:400">(${note})</span></div>
-      <div class="ow-sub">💍 ${h(regimeLbl(m.regime_bens))}</div></div></div></td>
+      <div class="ow-sub"><i class="ph-fill ph-heart"></i> ${h(regimeLbl(m.regime_bens))}</div></div></div></td>
     <td><span class="ow-doc">${h(m.cpf_conjuge)||'Não consta'}</span></td>
     <td><span class="frac-b" style="font-size:13px;color:var(--tm)">${fracHtml}</span></td>
     <td>${pctHtml}</td>
@@ -1297,7 +1322,7 @@ function renderOwners(owners){
         const natHdr=g.isBothRegistered?`<span class="natureza-tag nat-indef">2 titulares</span>`:`<span class="natureza-tag nat-indef">1 titular + cônjuge</span>`;
         html+=`<tr class="group-row" data-grp="${g.id}" data-nm="${h(g.name)}" tabindex="0" role="button" aria-expanded="false" onclick="toggleGroup(${g.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleGroup(${g.id})}">
           <td class="idx">${i+1}</td>
-          <td><div class="ow-name"><span class="grp-caret">▸</span>👫 ${h(g.name)}</div><div class="group-regime">${h(regimeLbl(g.regime))}</div></td>
+          <td><div class="ow-name"><span class="grp-caret">▸</span><i class="ph ph-users-three"></i> ${h(g.name)}</div><div class="group-regime">${h(regimeLbl(g.regime))}</div></td>
           <td>—</td><td>—</td>
           <td>${pctBar(g.pct,col,resumo)}</td>
           <td class="area-cell">${areaM2>0?fmtArea(areaM2):'—'}</td>
@@ -1311,7 +1336,7 @@ function renderOwners(owners){
           const aHtml=split?(split.ownerM2>0?`${fmtArea(split.ownerM2)} <span class="calc-mark">(efetiva)</span>`:areaDisp(m)):areaDisp(m);
           html+=`<tr class="sub-row grp-hidden" data-grp="${g.id}" data-nm="${h(m.nome)}">
             <td></td>
-            <td class="sub-row-name-cell"><div style="display:flex;align-items:flex-start"><span class="sub-ic">↳</span><div><div class="ow-name" style="color:${col};font-size:13px">${h(m.nome)}${detBtn(togId,m.parcelas.length)}</div>${g.isBothRegistered&&m.conjuge?`<div class="ow-sub">💍 ${h(m.conjuge)}</div>`:''}</div></div></td>
+            <td class="sub-row-name-cell"><div style="display:flex;align-items:flex-start"><span class="sub-ic">↳</span><div><div class="ow-name" style="color:${col};font-size:13px">${h(m.nome)}${detBtn(togId,m.parcelas.length)}</div>${g.isBothRegistered&&m.conjuge?`<div class="ow-sub"><i class="ph-fill ph-heart"></i> ${h(m.conjuge)}</div>`:''}</div></div></td>
             <td><span class="ow-doc">${h(m.cpf_cnpj)||'—'}</span></td>
             <td><span class="frac-b" style="font-size:13px">${h(fmtFracao(m.fracao))||'—'}</span></td>
             <td><span class="pct-n" style="color:${col}">${fmtPct(pctMain)}</span>${pctSub?`<div class="pct-sub">${pctSub}</div>`:''}</td>
@@ -1351,7 +1376,7 @@ function renderOwners(owners){
       const split=(o.conjuge&&!spReg)?calcConjugeSplit(o):null;
       const pctMain=split?split.ownerPct:pctOf(o.percentual);
       const aHtml=split?(split.ownerM2>0?`${fmtArea(split.ownerM2)} <span class="calc-mark">(efetiva)</span>`:areaDisp(o)):areaDisp(o);
-      const conjLine=o.conjuge?`<div class="ow-sub">💍 ${h(o.conjuge)}${spReg?' <span style="color:var(--ok)">(também titular)</span>':''} · ${h(regimeLbl(o.regime_bens))}</div>`:'';
+      const conjLine=o.conjuge?`<div class="ow-sub"><i class="ph-fill ph-heart"></i> ${h(o.conjuge)}${spReg?' <span style="color:var(--ok)">(também titular)</span>':''} · ${h(regimeLbl(o.regime_bens))}</div>`:'';
       html+=`<tr data-nm="${h(o.nome)}">
         <td class="idx">${i+1}</td>
         <td><div class="ow-name" style="color:${col}">${h(o.nome)}${detBtn(togId,o.parcelas.length)}</div>${conjLine}</td>
@@ -1407,8 +1432,8 @@ function renderTimeline(chain,diag){
     const hasEr=actDiag.some(d=>d.sev==='er'),hasWn=actDiag.some(d=>d.sev==='wn'||d.inferencia);
     const ring=hasEr?`<div class="htl-alert-ring er"></div>`:hasWn?`<div class="htl-alert-ring wn"></div>`:'';
     const ds=(act.data||'').split('/'),dateShort=ds.length>=2?ds.slice(1).join('/'):act.data||'';
-    const arTag=act.evento_area?'<span class="htl-tag htl-tag-ar">📐</span>':'';
-    const onTag=(act.onus_ativos||[]).length?'<span class="htl-tag htl-tag-on">⚠</span>':'';
+    const arTag=act.evento_area?'<span class="htl-tag htl-tag-ar"><i class="ph ph-ruler"></i></span>':'';
+    const onTag=(act.onus_ativos||[]).length?'<span class="htl-tag htl-tag-on"><i class="ph-fill ph-warning" style="color:inherit"></i></span>':'';
     return `<div class="htl-item ${cls}" id="htli-${i}" onclick="selectAct(${i})" title="${h(act.natureza||act.ato)}">
       <div class="htl-dw"><div class="htl-dot"></div>${ring}</div>
       <div class="htl-ato">${h(act.ato)||'—'}</div>
@@ -1435,36 +1460,44 @@ function selectAct(i){
     <span class="snap-nav"><button class="btn btn-g sm" ${i<=0?'disabled':''} onclick="selectAct(${i-1})" title="Ato anterior (←)">‹</button><button class="btn btn-g sm" ${i>=chain.length-1?'disabled':''} onclick="selectAct(${i+1})" title="Próximo ato (→)">›</button></span></div></div>`;
   if(act.resumo)x+=`<div class="snap-summary">${h(act.resumo)}</div>`;
   const meta=[];
-  if(act.transmitente||act.adquirente)meta.push(`👥 ${act.transmitente?`<strong>${h(act.transmitente)}</strong> → `:''}<strong style="color:var(--p)">${h(act.adquirente)||'—'}</strong>${act.fracao?` <span class="hist-frac">${h(act.fracao)}</span>`:''}`);
-  if(act.valor)meta.push(`💰 <strong>Valor:</strong> ${h(act.valor)}`);
-  const areaNow=act.area_remanescente||(act._area_m2>0?fmtArea(act._area_m2):'');
-  if(areaNow)meta.push(`📐 <strong>Área da matrícula neste momento:</strong> <span style="color:var(--ac);font-weight:700">${h(areaNow)}</span>`);
+  if(act.transmitente||act.adquirente)meta.push(`<i class="ph ph-users"></i> ${act.transmitente?`<strong>${h(act.transmitente)}</strong> → `:''}<strong style="color:var(--p)">${h(act.adquirente)||'—'}</strong>${act.fracao?` <span class="hist-frac">${h(act.fracao)}</span>`:''}`);
+  if(act.valor)meta.push(`<i class="ph ph-money"></i> <strong>Valor:</strong> ${h(act.valor)}`);
+  const isAreaChangeAct=!!(act.evento_area&&act.evento_area.area_depois)||
+                         !!(act.area_remanescente&&act._area_snap_m2!==act._area_m2);
+  // Para atos que alteram a área: mostra a área ANTES (snap), pois a nova área vale a partir do próximo ato
+  // Para atos normais: mostra a área vigente (_area_m2, que é igual a _area_snap_m2)
+  const snapM2=act._area_snap_m2||act._area_m2||0;
+  const areaNow=act.area_remanescente||(snapM2>0?fmtArea(snapM2):'');
+  const areaLabel=isAreaChangeAct
+    ?`<i class="ph ph-ruler"></i> <strong>Área antes desta alteração:</strong> <span style="color:var(--ts);font-weight:700">${h(areaNow)}</span>`
+    :`<i class="ph ph-ruler"></i> <strong>Área da matrícula neste momento:</strong> <span style="color:var(--ac);font-weight:700">${h(areaNow)}</span>`;
+  if(areaNow)meta.push(areaLabel);
   if(meta.length)x+=`<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ts)">${meta.map(m=>`<span>${m}</span>`).join('')}</div>`;
 
   if(actDiag.length){
-    x+=`<div class="snap-sec"><div class="snap-sec-t">🔬 Alertas deste ato</div><div style="display:flex;flex-direction:column;gap:6px">`;
+    x+=`<div class="snap-sec"><div class="snap-sec-t"><i class="ph ph-microscope"></i> Alertas deste ato</div><div style="display:flex;flex-direction:column;gap:6px">`;
     for(const d of actDiag){
       const c2=d.sev==='er'?'alto':d.inferencia?'inferencia':d.sev==='wn'?'medio':'info';
-      x+=`<div class="sm-al ${c2}"><span style="flex-shrink:0">${d.sev==='er'?'🔴':d.inferencia?'🔮':d.sev==='wn'?'🟡':'🔵'}</span><div><strong>${h(d.titulo)}</strong><br/><span style="font-size:12px">${h(d.corpo)}</span>${d.calc?`<div style="margin-top:6px;font-family:monospace;font-size:11px;background:rgba(0,0,0,.05);padding:6px;border-radius:4px;white-space:pre-wrap">${h(d.calc)}</div>`:''}</div></div>`;
+      x+=`<div class="sm-al ${c2}"><span style="flex-shrink:0">${d.sev==='er'?'<i class="ph-fill ph-warning-circle" style="color:var(--er)"></i>':d.inferencia?'<i class="ph-fill ph-magic-wand" style="color:var(--inf)"></i>':d.sev==='wn'?'<i class="ph-fill ph-warning" style="color:var(--wn)"></i>':'<i class="ph-fill ph-info" style="color:var(--ib)"></i>'}</span><div><strong>${h(d.titulo)}</strong><br/><span style="font-size:12px">${h(d.corpo)}</span>${d.calc?`<div style="margin-top:6px;font-family:monospace;font-size:11px;background:rgba(0,0,0,.05);padding:6px;border-radius:4px;white-space:pre-wrap">${h(d.calc)}</div>`:''}</div></div>`;
     }
     x+=`</div></div>`;
   }
   if(act.evento_area){
-    const ev=act.evento_area,tic={desmembramento:'✂️',remembramento:'🔗',retificacao:'📝',georreferenciamento:'🛰️',incorporacao:'🏗️',desapropriacao:'🏛️'}[ev.tipo]||'📐';
+    const ev=act.evento_area,tic={desmembramento:'<i class="ph ph-scissors"></i>',remembramento:'<i class="ph ph-link"></i>',retificacao:'<i class="ph ph-pencil-line"></i>',georreferenciamento:'<i class="ph ph-satellite"></i>',incorporacao:'<i class="ph ph-crane"></i>',desapropriacao:'<i class="ph ph-bank"></i>'}[ev.tipo]||'<i class="ph ph-ruler"></i>';
     x+=`<div class="area-ev standard"><div class="area-ev-t">${tic} ${h((ev.tipo||'').toUpperCase())}${ev.redistribuicao_especificada===false?' <span class="infer-label">redistribuição não especificada</span>':''}</div>
       <div class="area-diag"><div class="area-box" style="color:var(--ts)"><div class="area-box-v">${h(ev.area_antes)||'—'}</div><div class="area-box-l">Antes</div></div><div class="area-arr">→</div><div class="area-box" style="color:var(--ac)"><div class="area-box-v">${h(ev.area_depois)||'—'}</div><div class="area-box-l">Após</div></div></div>
       <div class="area-desc">${h(ev.descricao)}${(ev.matriculas_relacionadas||[]).length?' · Mat.: '+h(ev.matriculas_relacionadas.join(', ')):''}</div></div>`;
   }
   const snap=act.snapshot_proprietarios||[];
   if(snap.length){
-    x+=`<div class="snap-sec"><div class="snap-sec-t">👥 Proprietários imediatamente após este ato</div><div class="snap-ow-rows">${snap.map((p,i2)=>{
+    x+=`<div class="snap-sec"><div class="snap-sec-t"><i class="ph ph-users"></i> Proprietários imediatamente após este ato</div><div class="snap-ow-rows">${snap.map((p,i2)=>{
       const pct=pctOf(p.percentual),c=COLORS[i2%COLORS.length],ar=p.area_calc||p.area_correspondente||'';
       return `<div class="snap-ow" data-nm="${h(p.nome)}"><div class="snap-ow-top"><span class="snap-ow-name" style="color:${c}" title="${h(p.nome)}">${h(p.nome)||'—'}</span><div class="snap-ow-bw"><div class="snap-ow-bf" style="width:${Math.min(pct,100)}%;background:${c}"></div></div><span class="snap-ow-pct" style="color:${c}">${fmtPct(pct)}</span></div>
-        <div class="snap-ow-bottom"><span class="snap-ow-fr">${h(fmtFracao(p.fracao))}</span>${ar?`<span class="snap-ow-ar">📐 ${h(ar)}${p.area_calc?' <span class="calc-mark">(calc.)</span>':''}</span>`:''}</div></div>`;
+        <div class="snap-ow-bottom"><span class="snap-ow-fr">${h(fmtFracao(p.fracao))}</span>${ar?`<span class="snap-ow-ar"><i class="ph ph-ruler"></i> ${h(ar)}${p.area_calc?' <span class="calc-mark">(calc.)</span>':''}</span>`:''}</div></div>`;
     }).join('')}</div></div>`;
   }
   const onus=act.onus_ativos||[];
-  x+=`<div class="snap-sec"><div class="snap-sec-t">⚖️ Ônus ativos neste momento</div>${onus.length?`<div class="onus-list">${onus.map(o=>`<div class="onus-it ${h((o.tipo||'outros').replace(/\s/g,'_'))}"><span style="flex-shrink:0">⚠️</span><div><strong>${h((o.tipo||'').replace(/_/g,' ').toUpperCase())}</strong>${o.credor_beneficiario?' — '+h(o.credor_beneficiario):''}${o.fracao_atingida?` <span class="hist-frac">${h(o.fracao_atingida)}</span>`:''}<br/><span style="opacity:.85">${h(o.descricao)}</span></div></div>`).join('')}</div>`:`<div class="onus-none">Nenhum ônus ativo neste momento</div>`}</div>`;
+  x+=`<div class="snap-sec"><div class="snap-sec-t"><i class="ph ph-scales"></i> Ônus ativos neste momento</div>${onus.length?`<div class="onus-list">${onus.map(o=>`<div class="onus-it ${h((o.tipo||'outros').replace(/\s/g,'_'))}"><span style="flex-shrink:0"><i class="ph-fill ph-warning" style="color:inherit"></i></span><div><strong>${h((o.tipo||'').replace(/_/g,' ').toUpperCase())}</strong>${o.credor_beneficiario?' — '+h(o.credor_beneficiario):''}${o.fracao_atingida?` <span class="hist-frac">${h(o.fracao_atingida)}</span>`:''}<br/><span style="opacity:.85">${h(o.descricao)}</span></div></div>`).join('')}</div>`:`<div class="onus-none">Nenhum ônus ativo neste momento</div>`}</div>`;
   x+=`</div>`;
   document.getElementById('snapContent').innerHTML=x;
   const sv=document.getElementById('srchInp').value;if(sv)applyHL(sv);
@@ -1476,19 +1509,30 @@ function renderHist(chain){
   if(!chain.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--tm)">Nenhum ato identificado</div>';return;}
   el.innerHTML=chain.map((act,i)=>{
     const cls=evCls(act),col=evCol(cls),actDiag=diagOf(act.ato);
-    const arTag=act.evento_area?`<span class="tag-ar">📐 ${h(act.evento_area.tipo||'área')}</span>`:'';
-    const onTags=(act.onus_ativos||[]).map(o=>`<span class="tag-on">⚠ ${h((o.tipo||'ônus').replace(/_/g,' '))}</span>`).join('');
-    const cnTag=/cancel/.test((act.natureza||'').toLowerCase())?'<span class="tag-cn">✅ cancelamento</span>':'';
-    const diagTags=actDiag.length?`<span class="tag-inf" onclick="switchTab('diag')">🔬 ${actDiag.length} alerta(s)</span>`:'';
+    const arTag=act.evento_area?`<span class="tag-ar"><i class="ph ph-ruler"></i> ${h(act.evento_area.tipo||'área')}</span>`:'';
+    const onTags=(act.onus_ativos||[]).map(o=>`<span class="tag-on"><i class="ph-fill ph-warning" style="color:inherit"></i> ${h((o.tipo||'ônus').replace(/_/g,' '))}</span>`).join('');
+    const cnTag=/cancel/.test((act.natureza||'').toLowerCase())?'<span class="tag-cn"><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> cancelamento</span>':'';
+    const diagTags=actDiag.length?`<span class="tag-inf" onclick="switchTab('diag')"><i class="ph ph-microscope"></i> ${actDiag.length} alerta(s)</span>`:'';
     let parties='';
     if(act.transmitente&&act.adquirente)parties=`<div class="hist-parties"><span class="hist-party">${h(act.transmitente)}</span><span class="hist-arr">→</span><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
     else if(act.adquirente)parties=`<div class="hist-parties"><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
     const tags=arTag+onTags+cnTag+diagTags;
+    // Área exibida no histórico: ANTES da alteração para atos geo/retif, normal para demais
+    const histIsChange=!!(act.evento_area&&act.evento_area.area_depois)||(act._area_snap_m2>0&&act._area_snap_m2!==act._area_m2);
+    let areaHtml='';
+    if(histIsChange&&act.evento_area){
+      const antes=act.evento_area.area_antes||(act._area_snap_m2>0?fmtArea(act._area_snap_m2):'');
+      const depois=act.evento_area.area_depois||(act._area_m2>0?fmtArea(act._area_m2):'');
+      areaHtml=`<div style="font-size:11px;margin-top:3px;font-weight:700"><span style="color:var(--ts)"><i class="ph ph-ruler"></i> ${h(antes)}</span><span style="color:var(--tm);margin:0 5px">→</span><span style="color:var(--ac)"><i class="ph ph-ruler"></i> ${h(depois)}</span></div>`;
+    } else if(act.area_remanescente||(act._area_snap_m2>0)){
+      const aStr=act.area_remanescente||(act._area_snap_m2>0?fmtArea(act._area_snap_m2):'');
+      if(aStr)areaHtml=`<div style="font-size:11px;color:var(--ac);margin-top:3px;font-weight:700"><i class="ph ph-ruler"></i> ${h(aStr)}</div>`;
+    }
     return `<div class="hist-it" data-nm="${h([act.transmitente,act.adquirente].filter(Boolean).join(' '))}">
       <div class="hist-side" onclick="gotoAct('${h(act.ato)}')" title="Ver na linha do tempo"><div class="hist-ato" style="background:${col}">${h(act.ato)||'?'}</div><div class="hist-date">${h(act.data||'').replace(/\//g,'<br/>')}</div></div>
       <div class="hist-body"><div class="hist-nat">${h(act.natureza)||'—'}</div><div class="hist-sum">${h(act.resumo)}</div>${parties}${tags?`<div class="hist-tags">${tags}</div>`:''}
-        ${act.area_remanescente?`<div style="font-size:11px;color:var(--ac);margin-top:3px;font-weight:700">📐 ${h(act.area_remanescente)}</div>`:''}
-        ${act.valor?`<div style="font-size:11.5px;color:var(--tm);margin-top:2px">💰 ${h(act.valor)}</div>`:''}</div>
+        ${areaHtml}
+        ${act.valor?`<div style="font-size:11.5px;color:var(--tm);margin-top:2px"><i class="ph ph-money"></i> ${h(act.valor)}</div>`:''}</div>
     </div>`;
   }).join('');
 }
@@ -1500,19 +1544,19 @@ function renderDiag(data,diag){
     <div class="score-circle" style="color:${s.col};border-color:${s.col}"><div class="sc-num">${s.val}</div><div class="sc-den">/100</div></div>
     <div class="score-details"><div class="score-cat" style="color:${s.col}">${s.cat}</div>
       <div class="score-factors">
-        ${s.erCount?`<span style="color:var(--er)">🔴 ${s.erCount} crítico(s)</span> · `:''}${s.wnCount?`<span style="color:var(--wn)">🟡 ${s.wnCount} atenção</span> · `:''}${infCount?`<span style="color:var(--inf)">🔮 ${infCount} inferência(s)</span>`:''}
+        ${s.erCount?`<span style="color:var(--er)"><i class="ph-fill ph-warning-circle" style="color:var(--er)"></i> ${s.erCount} crítico(s)</span> · `:''}${s.wnCount?`<span style="color:var(--wn)"><i class="ph-fill ph-warning" style="color:var(--wn)"></i> ${s.wnCount} atenção</span> · `:''}${infCount?`<span style="color:var(--inf)"><i class="ph-fill ph-magic-wand" style="color:var(--inf)"></i> ${infCount} inferência(s)</span>`:''}
         ${!diag.length?'<span style="color:var(--ok)">Nenhuma inconsistência identificada</span>':''}
-        ${fp.length?`<br/><span style="color:var(--ok)">✅ ${h(fp.join(' · '))}</span>`:''}${fn.length?`<br/><span style="color:var(--er)">❌ ${h(fn.join(' · '))}</span>`:''}
+        ${fp.length?`<br/><span style="color:var(--ok)"><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> ${h(fp.join(' · '))}</span>`:''}${fn.length?`<br/><span style="color:var(--er)"><i class="ph-fill ph-x-circle" style="color:var(--er)"></i> ${h(fn.join(' · '))}</span>`:''}
       </div></div>`;
-  const cats={propriedade:{label:'👥 Propriedade e Frações',items:[]},area:{label:'📐 Área e Desmembramentos',items:[]},onus:{label:'⚖️ Ônus e Gravames',items:[]},temporal:{label:'⏱️ Sequência Temporal',items:[]},juridico:{label:'📋 Aspectos Jurídicos',items:[]}};
+  const cats={propriedade:{label:'<i class="ph ph-users"></i> Propriedade e Frações',items:[]},area:{label:'<i class="ph ph-ruler"></i> Área e Desmembramentos',items:[]},onus:{label:'<i class="ph ph-scales"></i> Ônus e Gravames',items:[]},temporal:{label:'<i class="ph ph-clock"></i> Sequência Temporal',items:[]},juridico:{label:'<i class="ph ph-clipboard-text"></i> Aspectos Jurídicos',items:[]}};
   for(const d of diag)(cats[d.cat]||cats.juridico).items.push(d);
   const catsEl=document.getElementById('diagCats');
-  if(!diag.length){catsEl.innerHTML=`<div class="diag-empty">✅ Nenhuma inconsistência identificada.<br/>A cadeia possessória parece regular com base nos dados analisados.</div>`;return;}
+  if(!diag.length){catsEl.innerHTML=`<div class="diag-empty"><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> Nenhuma inconsistência identificada.<br/>A cadeia possessória parece regular com base nos dados analisados.</div>`;return;}
   const rank={er:0,wn:1,ii:2};
   catsEl.innerHTML=Object.values(cats).filter(v=>v.items.length).map(v=>{
     const items=[...v.items].sort((a,b)=>rank[a.sev]-rank[b.sev]).map(d=>{
       const dcls=d.sev==='er'?'er':d.inferencia?'inf':d.sev==='wn'?'wn':'ii';
-      const icon=d.sev==='er'?'🔴':d.inferencia?'🔮':d.sev==='wn'?'🟡':'🔵';
+      const icon=d.sev==='er'?'<i class="ph-fill ph-warning-circle" style="color:var(--er)"></i>':d.inferencia?'<i class="ph-fill ph-magic-wand" style="color:var(--inf)"></i>':d.sev==='wn'?'<i class="ph-fill ph-warning" style="color:var(--wn)"></i>':'<i class="ph-fill ph-info" style="color:var(--ib)"></i>';
       return `<div class="diag-item ${dcls}">
         <div class="diag-item-h">${icon} ${h(d.titulo)} ${d.ato?`<span class="diag-item-src">[${h(d.ato)}]</span>`:''} ${d.inferencia?`<span class="infer-label" style="font-size:9px">Inferência — verificar</span>`:''}</div>
         <div class="diag-item-body">${h(d.corpo)} <span style="font-size:10px;opacity:.6">${h(d.src)}</span></div>
@@ -1569,7 +1613,7 @@ function gerarParecer(navigate){
   }
   if(d.observacoes)t+=`\nOBSERVAÇÕES DA IA\n${L(30)}\n${d.observacoes}\n`;
   t+=`\n${L(55,'═')}\nEste parecer foi gerado automaticamente por sistema de IA.\nNão substitui análise jurídica por profissional habilitado.\nOs dados são extraídos da certidão fornecida e estão sujeitos à conferência manual.`;
-  document.getElementById('parecerArea').innerHTML=`<div class="parecer-box"><div class="parecer-hd">📄 Parecer Técnico Gerado<span style="display:flex;gap:6px"><button class="btn btn-g sm" onclick="copyParecer()">📋 Copiar</button><button class="btn btn-g sm" onclick="downloadText(window._parecerText,'parecer-matricula-${h(im.numero_matricula||'sn')}.txt')">⬇ .txt</button></span></div><div class="parecer-txt">${h(t)}</div></div>`;
+  document.getElementById('parecerArea').innerHTML=`<div class="parecer-box"><div class="parecer-hd"><i class="ph ph-file-text"></i> Parecer Técnico Gerado<span style="display:flex;gap:6px"><button class="btn btn-g sm" onclick="copyParecer()"><i class="ph ph-clipboard-text"></i> Copiar</button><button class="btn btn-g sm" onclick="downloadText(window._parecerText,'parecer-matricula-${h(im.numero_matricula||'sn')}.txt')"><i class="ph ph-download-simple"></i> .txt</button></span></div><div class="parecer-txt">${h(t)}</div></div>`;
   window._parecerText=t;
   if(navigate){switchTab('diag');document.getElementById('parecerArea').style.display='';document.getElementById('parecerArea').scrollIntoView({behavior:'smooth',block:'start'});}
 }
@@ -1622,9 +1666,9 @@ function resetAnalysis(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function toast(msg,type='i'){
-  const mc={i:'al-i',w:'al-w',e:'al-e',s:'al-s'},ic={i:'ℹ️',w:'⚠️',e:'❌',s:'✅'};
+  const mc={i:'al-i',w:'al-w',e:'al-e',s:'al-s'},ic={i:'<i class="ph-fill ph-info"></i>',w:'<i class="ph-fill ph-warning" style="color:inherit"></i>',e:'<i class="ph-fill ph-x-circle" style="color:var(--er)"></i>',s:'<i class="ph-fill ph-check-circle" style="color:var(--ok)"></i>'};
   const el=document.createElement('div');el.className=`toast al ${mc[type]||'al-i'}`;
-  el.innerHTML=`<span class="al-ic">${ic[type]||'ℹ️'}</span><span>${msg}</span>`;
+  el.innerHTML=`<span class="al-ic">${ic[type]||'<i class="ph-fill ph-info"></i>'}</span><span>${msg}</span>`;
   document.body.appendChild(el);
   setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},6000);
 }
