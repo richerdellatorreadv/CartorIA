@@ -644,10 +644,10 @@ function removeKeys(){
 function syncUI(){
   const hG=!!getGK(),hO=!!getOK(),hOai=!!getOAK(),hA=hG||hO||hOai;
   document.getElementById('apiDot').classList.toggle('ok',hA);
-  document.getElementById('apiLabel').textContent=hA?'<i class="ph ph-gear"></i> Provedores':'Configurar IA';
+  document.getElementById('apiLabel').innerHTML=hA?'<i class="ph ph-gear"></i> Provedores':'Configurar IA';
   const pill=document.getElementById('provPill');
   pill.style.display=hA?'':'none';
-  pill.textContent=hOai?'<i class="ph-fill ph-circle" style="color:var(--ok)"></i> OpenAI':hG?'<i class="ph-fill ph-robot"></i> Gemini':'<i class="ph ph-shuffle"></i> OpenRouter';
+  pill.innerHTML=hOai?'<i class="ph-fill ph-circle" style="color:var(--ok)"></i> OpenAI':hG?'<i class="ph-fill ph-robot"></i> Gemini':'<i class="ph ph-shuffle"></i> OpenRouter';
   document.getElementById('btnRm').style.display=hA?'inline-flex':'none';
   const setSt=(id,card,on)=>{const e=document.getElementById(id);if(!e)return;e.textContent=on?'<i class="ph ph-check"></i> Configurado':'Não configurado';e.className='prov-st'+(on?' ok':'');document.getElementById(card).classList.toggle('active-p',on);};
   setSt('gem-st','card-gem',hG);setSt('or-st','card-or',hO);setSt('oai-st','card-oai',hOai);
@@ -1127,7 +1127,7 @@ function renderAll(data,provLabel){
   const erCount=gDiag.filter(d=>d.sev==='er').length;
   const diagBdg=document.getElementById('bdg-diag');
   if(erCount>0){diagBdg.textContent=erCount;diagBdg.style.display='';}else diagBdg.style.display='none';
-  document.getElementById('analysisTs').textContent=`Analisado em ${new Date().toLocaleString('pt-BR')} via ${provLabel}`;
+  document.getElementById('analysisTs').innerHTML=`Analisado em ${new Date().toLocaleString('pt-BR')} via ${provLabel}`;
   switchTab('donos');show('resultsS');
   document.getElementById('resultsS').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1559,7 +1559,7 @@ function renderDiag(data,diag){
       const icon=d.sev==='er'?'<i class="ph-fill ph-warning-circle" style="color:var(--er)"></i>':d.inferencia?'<i class="ph-fill ph-magic-wand" style="color:var(--inf)"></i>':d.sev==='wn'?'<i class="ph-fill ph-warning" style="color:var(--wn)"></i>':'<i class="ph-fill ph-info" style="color:var(--ib)"></i>';
       return `<div class="diag-item ${dcls}">
         <div class="diag-item-h">${icon} ${h(d.titulo)} ${d.ato?`<span class="diag-item-src">[${h(d.ato)}]</span>`:''} ${d.inferencia?`<span class="infer-label" style="font-size:9px">Inferência — verificar</span>`:''}</div>
-        <div class="diag-item-body">${h(d.corpo)} <span style="font-size:10px;opacity:.6">${h(d.src)}</span></div>
+        <div class="diag-item-body">${h(d.corpo)} <span style="font-size:10px;opacity:.6">${d.src}</span></div>
         ${d.calc?`<div class="diag-item-calc">${h(d.calc)}</div>`:''}
         ${d.ato&&findActIdx(d.ato)>=0?`<span class="diag-link" onclick="gotoAct('${h(d.ato)}')">Ver na linha do tempo →</span>`:''}
       </div>`;
