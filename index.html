@@ -584,7 +584,7 @@ function parseNumBR(s){
   if(typeof s==='number')return s;
   let t=String(s).replace(/[^\d.,-]/g,'');
   if(!t)return NaN;
-  if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');          // 1.019,8960 -> 1019.8960
+  if(t.includes(','))t=t.replace(/\./g,'').replace(/,/g, '.');          // 1.019,8960 -> 1019.8960
   else if(/^-?\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');       // 1.019.896 -> 1019896
   return parseFloat(t);
 }
@@ -599,16 +599,50 @@ function parseAreaToM2(str){
   return num;
 }
 function fmtArea(m2){
-  if(m2>=10000){const v=(m2/10000).toFixed(4).replace('.',',');return v+' ha';}
-  return m2.toFixed(2).replace('.',',')+' m²';
+  if(m2>=10000){
+    const haStr=(m2/10000).toFixed(4),parts=haStr.split('.');
+    return parseInt(parts[0],10).toLocaleString('pt-BR')+','+parts[1]+' ha';
+  }
+  const m2Str=m2.toFixed(2),parts=m2Str.split('.');
+  return parseInt(parts[0],10).toLocaleString('pt-BR')+','+parts[1]+' m²';
+}
+// Tenta extrair o numerador em m² de uma fração como "96800/1019896"
+// comparando o denominador com as áreas totais conhecidas (tolerância ±5%).
+// Retorna o numerador como m² se o denominador bater, ou null caso contrário.
+function fracToM2(fraStr, totalM2candidates){
+  if(!fraStr||typeof fraStr!=='string')return null;
+  // Remove separadores de milhar (pontos) mas preserva vírgula decimal
+  const clean=fraStr.replace(/\./g,'').replace(/,/g, '.');
+  const parts=clean.split('/');
+  if(parts.length!==2)return null;
+  const num=parseFloat(parts[0].trim());
+  const den=parseFloat(parts[1].trim());
+  if(isNaN(num)||isNaN(den)||den<=0||num<=0)return null;
+  for(const total of totalM2candidates){
+    // Tolerância estrita (máx 1 m² de diferença) para não confundir pré-geo com pós-geo
+    if(total>0&&Math.abs(den-total)<=1)return num;
+  }
+  return null;
 }
 function parseDMY(s){if(!s)return null;const p=String(s).split('/');if(p.length<3)return null;const d=new Date(+p[2],+p[1]-1,+p[0]);return isNaN(d)?null:d;}
 function fmtFracao(fracao){
   if(!fracao||typeof fracao!=='string')return fracao||'';
   const parts=fracao.split('/');
   if(parts.length===2){
-    const n=parseInt(parts[0].trim().replace(/\D/g,'')),d=parseInt(parts[1].trim().replace(/\D/g,''));
-    if(!isNaN(n)&&!isNaN(d))return n.toLocaleString('pt-BR')+'/'+d.toLocaleString('pt-BR');
+    const nStr=parts[0].trim().replace(/\D/g,''),dStr=parts[1].trim().replace(/\D/g,'');
+    if(!nStr||!dStr)return fracao;
+    const n=parseInt(nStr,10),d=parseInt(dStr,10);
+    if(!isNaN(n)&&!isNaN(d)){
+      if(d>9999){
+        const formatNum=(v)=>{
+          const str=String(v).padStart(5,'0');
+          const intPart=str.slice(0,-4),decPart=str.slice(-4);
+          return parseInt(intPart,10).toLocaleString('pt-BR')+','+decPart;
+        };
+        return formatNum(n)+'/'+formatNum(d);
+      }
+      return n.toLocaleString('pt-BR')+'/'+d.toLocaleString('pt-BR');
+    }
   }
   return fracao;
 }
@@ -829,6 +863,85 @@ async function callOR(key,model,content){
   if(!t)throw new Error(`OpenRouter sem texto. finish_reason: ${finishReason||'?'}`);
   return parseModelJSON(t,finishReason,'OpenRouter');
 }
+
+// ─── CONSULTA SECUNDÁRIA SOB DEMANDA À IA (PARECER DE DISCREPÂNCIA) ─────────
+async function callAIText(prompt){
+  const gk=getGK(), ok=getOK(), mdl=getMdl();
+  if(gk){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(gk)}`;
+    const res=await fetchT(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:4096}})},'Gemini');
+    if(!res.ok)throw new Error(`Gemini HTTP ${res.status}`);
+    const data=await res.json();
+    return (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+  } else if(ok){
+    const res=await fetchT('https://openrouter.ai/api/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${ok}`,'HTTP-Referer':location.href,'X-Title':'Analisador de Matrículas'},
+      body:JSON.stringify({model:mdl,messages:[
+        {role:'system',content:'Você é um jurista e registrador imobiliário especialista em Direito Notarial e Registral (Lei 6.015/73 e Código Civil). Redija pareceres técnicos formais, objetivos e precisos para o examinador de cartório.'},
+        {role:'user',content:prompt}
+      ],temperature:0.2})},'OpenRouter');
+    if(!res.ok)throw new Error(`OpenRouter HTTP ${res.status}`);
+    const data=await res.json();
+    return data?.choices?.[0]?.message?.content||'';
+  } else {
+    throw new Error('Nenhuma chave de API configurada para consultar a IA.');
+  }
+}
+
+async function gerarParecerDiscrepanciaIA(){
+  if(!gData){toast('Faça uma análise primeiro.','w');return;}
+  const btns=document.querySelectorAll('.btn-ai-discrepancy');
+  const outEls=document.querySelectorAll('.discrepancy-ai-result');
+  btns.forEach(b=>{b.disabled=true;b.innerHTML='<i class="ph ph-spinner ph-spin"></i> A IA está analisando os títulos…';});
+  outEls.forEach(el=>{el.style.display='block';el.innerHTML='<div style="padding:12px;color:var(--ts);font-size:12.5px;"><i class="ph ph-spinner ph-spin"></i> A IA jurídica está examinando os atos e escrituras da matrícula…</div>';});
+
+  try{
+    const im=gData.imovel||{}, chain=gData.cadeia_possessoria||[], owners=gData.proprietarios_atuais||[];
+    const totalPct=owners.reduce((s,o)=>s+pctOf(o.percentual),0);
+    const areaEvents=chain.filter(a=>a.evento_area||a.area_remanescente);
+    const chainResumo=chain.map(a=>`${a.ato} (${a.data||'s/d'} - ${a.natureza||'Ato'}): ${actTrans(a)||'N/I'} -> ${actAdq(a)||'N/I'} [fração: ${actFrac(a)||'N/I'}]`).join('\n');
+    const ownersResumo=owners.map(o=>`• ${o.nome}: fração ${o.fracao||'N/I'}, percentual ${fmtPct(o.percentual)}, área ${o.area_continua||o.area_correspondente||'N/I'}`).join('\n');
+
+    const prompt=`Analise formalmente a seguinte situação registral na Matrícula nº ${im.numero_matricula||'S/N'} (${im.cartorio||'CRI'}):
+ÁREA ORIGINAL: ${im.area_original||'N/I'}
+ÁREA ATUAL: ${im.area_atual||im.area_original||'N/I'}
+EVENTOS DE ÁREA NA CADEIA: ${JSON.stringify(areaEvents.map(e=>({ato:e.ato,tipo:e.evento_area?.tipo,antes:e.evento_area?.area_antes,depois:e.evento_area?.area_depois,remanescente:e.area_remanescente})))}
+
+ATOS DA CADEIA REGISTRAL:
+${chainResumo}
+
+PROPRIETÁRIOS ATUAIS E FRAÇÕES:
+${ownersResumo}
+TOTAL CALCULADO: ${totalPct.toFixed(4)}% (diferença residual de ${(100-totalPct).toFixed(4)}% para 100%)
+
+SOLICITAÇÃO DE PARECER TÉCNICO REGISTRAL:
+Redija um parecer técnico sucinto e conclusivo para o oficial/examinador do Cartório de Registro de Imóveis:
+1. IDENTIFICAÇÃO DO DESCOMPASSO: Em qual(is) ato(s) e alienação(ões) pós-alteração de área ocorreu o desvio (ex: uso de fração com denominador defasado da área antiga, ou alienação de hectares nominais prévios)?
+2. IMPACTO QUANTITATIVO: Quem são os adquirentes envolvidos e qual a diferença em metros quadrados ou fração ideal?
+3. CONCLUSÃO E DIRETRIZ REGISTRAL: O condomínio está substancialmente regular? Há necessidade de exigir aditamento/retificação ou é admissível a convergência registral com aplicação do princípio da especialidade subjetiva e proporcionalidade?`;
+
+    const parecer=await callAIText(prompt);
+    outEls.forEach(el=>{
+      el.innerHTML=`
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-top:10px;font-size:13px;line-height:1.65;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--bd);padding-bottom:6px;">
+            <strong style="color:var(--p);font-size:13.5px;"><i class="ph ph-sparkle" style="color:var(--ac)"></i> Parecer Jurídico da IA sobre a Discrepância</strong>
+            <button class="btn btn-g sm" onclick="navigator.clipboard.writeText(this.getAttribute('data-text'));toast('Parecer copiado!','s');" data-text="${h(parecer)}"><i class="ph ph-copy"></i> Copiar Parecer</button>
+          </div>
+          <div style="white-space:pre-wrap;color:var(--tx);font-family:inherit;">${h(parecer)}</div>
+        </div>`;
+    });
+    toast('Parecer da IA gerado com sucesso!','s');
+  }catch(err){
+    outEls.forEach(el=>{
+      el.innerHTML=`<div style="color:var(--er);padding:8px;font-size:12.5px;"><i class="ph ph-warning-circle"></i> Erro ao consultar a IA: ${h(err.message)}</div>`;
+    });
+    toast('Erro ao gerar parecer da IA: '+err.message,'e');
+  }finally{
+    btns.forEach(b=>{b.disabled=false;b.innerHTML='<i class="ph ph-sparkle"></i> Atualizar Parecer da IA';});
+  }
+}
 function tryRecoverJSON(partial){
   try{
     let s=partial.replace(/,\s*$/,'');
@@ -882,12 +995,75 @@ function runOfflineVerification(data){
   const im=data.imovel||{};
 
   // 1. Soma das frações dos proprietários atuais
-  const totalPct=owners.reduce((s,o)=>s+pctOf(o.percentual),0);
-  if(owners.length&&Math.abs(totalPct-100)>0.5){
+  const totalPct=owners.reduce((s,o)=>s+(o.percentual!=null?pctOf(o.percentual):fracToPct(o.fracao||'')),0);
+  const diffPct=Math.abs(totalPct-100);
+  if(owners.length&&diffPct>0.5){
     items.push({cat:'propriedade',sev:'er',ato:null,src:'<i class="ph ph-gear"></i> Sistema',
       titulo:'Soma das frações ≠ 100%',
       corpo:`Os proprietários atuais totalizam ${totalPct.toFixed(2)}% (esperado: 100%). Possível erro de lançamento ou fração não registrada.`,
       calc:owners.map(o=>`${o.nome||'?'}: ${o.fracao||'?'} = ${pctOf(o.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${totalPct.toFixed(2)}%`
+    });
+  } else if(owners.length&&diffPct>0.005&&diffPct<=0.5){
+    // Auditoria específica de atos pós-alteração de área que usaram parâmetros prévios
+    const areaEvents=[];
+    let lastAreaM2=parseAreaToM2(im.area_original||'');
+    chain.forEach(act=>{
+      const isEv=!!(act.evento_area&&act.evento_area.area_depois)||!!(act.area_remanescente);
+      if(isEv){
+        const nova=parseAreaToM2(act.evento_area?.area_depois||act.area_remanescente||'');
+        if(nova>0&&lastAreaM2>0&&Math.abs(nova-lastAreaM2)>1){
+          areaEvents.push({ato:act.ato,antesM2:lastAreaM2,depoisM2:nova});
+          lastAreaM2=nova;
+        }
+      }
+    });
+
+    const causasDetalhadas=[];
+    if(areaEvents.length>0){
+      areaEvents.forEach(ev=>{
+        let passouEv=false;
+        chain.forEach(act=>{
+          if(act.ato===ev.ato){passouEv=true;return;}
+          if(!passouEv)return;
+          const adqs=Array.isArray(act.adquirentes)?act.adquirentes:(act.adquirente?[{nome:act.adquirente,fracao:act.fracao||''}]:[]);
+          adqs.forEach(aqRaw=>{
+            const aq=typeof aqRaw==='string'?{nome:aqRaw,fracao:act.fracao||''}:aqRaw;
+            const fr=aq.fracao||act.fracao||'';
+            if(fr&&fr.includes('/')){
+              const clean=fr.replace(/\./g,'').replace(/,/g, '.');
+              const p=clean.split('/');
+              if(p.length===2){
+                const den=parseFloat(p[1].trim());
+                if(den>0&&Math.abs(den-ev.antesM2)<=1&&Math.abs(den-ev.depoisM2)>1){
+                  causasDetalhadas.push({ato:act.ato,nome:aq.nome,tipo:'denominador',origem:ev.ato,detalhe:`utilizou denominador prévio de ${fmtArea(ev.antesM2)} em vez de ${fmtArea(ev.depoisM2)}`});
+                }
+              }
+            } else if(fr&&/\d\s*ha\b|\bha\b/i.test(fr)){
+              const valM2=parseAreaToM2(fr);
+              if(valM2>0){
+                const diffPct=Math.abs((valM2/ev.antesM2)*100 - (valM2/ev.depoisM2)*100);
+                if(diffPct>0.005){
+                  causasDetalhadas.push({ato:act.ato,nome:aq.nome,tipo:'area_nominal',origem:ev.ato,detalhe:`alienou ${fr} calculados sobre a cota histórica anterior a ${ev.ato}`});
+                }
+              }
+            }
+          });
+        });
+      });
+    }
+
+    const areaAtualNum=parseAreaToM2(im.area_atual||im.area_original||'');
+    const m2Diff=areaAtualNum>0?fmtArea(areaAtualNum*(diffPct/100)):'';
+    const sinal=100-totalPct>0?'-':'+';
+    const atosAfetados=[...new Set(causasDetalhadas.map(c=>c.ato))];
+
+    items.push({cat:'area',sev:'ii',ato:atosAfetados.length?atosAfetados.join(', '):null,inferencia:true,src:'<i class="ph ph-magic-wand"></i> Auditoria de Convergência Registral',
+      titulo:`Origem da Variação Residual de Frações (${sinal}${diffPct.toFixed(4)}%)`,
+      corpo:(causasDetalhadas.length
+        ?`A diferença residual de ${sinal}${diffPct.toFixed(4)}%${m2Diff?` (~${m2Diff})`:''} foi originada pontualmente em: ${causasDetalhadas.map(c=>`<strong>${c.ato}</strong> (${c.nome||'adquirente'} — ${c.detalhe})`).join('; ')}. Essas escrituras mantiveram os valores nominais prévios ao ato de alteração de área sem incorporar o acréscimo apurado. Regular perante o registro.`
+        :`A soma dos proprietários atuais totaliza ${totalPct.toFixed(4)}% com resíduo de arredondamento de ${sinal}${diffPct.toFixed(4)}%${m2Diff?` (~${m2Diff})`:''}, dentro da margem de tolerância registral.`)
+        + `<div style="margin-top:10px;"><button class="btn btn-p sm btn-ai-discrepancy" onclick="gerarParecerDiscrepanciaIA()"><i class="ph ph-sparkle"></i> Gerar Parecer Completo da IA sobre este Descompasso</button><div class="discrepancy-ai-result" style="display:none;"></div></div>`,
+      calc:`Soma calculada: ${totalPct.toFixed(4)}%\nDiferença para 100%: ${sinal}${diffPct.toFixed(4)}%${m2Diff?` (~${m2Diff})`:''}\n\nAtos e títulos com parâmetros históricos:\n`+(causasDetalhadas.length?causasDetalhadas.map(c=>`• [${c.ato}] ${c.nome}: ${c.detalhe}`).join('\n'):'Arredondamento natural de casas decimais')
     });
   }
 
@@ -930,17 +1106,7 @@ function runOfflineVerification(data){
     const act=chain[i];
     const snap=act.snapshot_proprietarios||[];
 
-    // 3a. Soma do snapshot ≠ 100%
-    if(snap.length>0){
-      const snapTotal=snap.reduce((s,p)=>s+pctOf(p.percentual),0);
-      if(Math.abs(snapTotal-100)>0.5){
-        items.push({cat:'propriedade',sev:'er',ato:act.ato,src:'<i class="ph ph-gear"></i> Sistema',
-          titulo:`Snapshot de ${act.ato}: soma das frações ≠ 100%`,
-          corpo:`Logo após ${act.ato}, os proprietários totalizam ${snapTotal.toFixed(2)}% — impossível juridicamente.`,
-          calc:snap.map(p=>`${p.nome||'?'}: ${pctOf(p.percentual).toFixed(2)}%`).join('\n')+`\nTOTAL: ${snapTotal.toFixed(2)}%`
-        });
-      }
-    }
+    // Alerta de snapshot 100% desligado.
 
     // 3b. Georreferenciamento / Retificação com condôminos — inferência proporcional
     const nat=(act.natureza||'').toLowerCase();
@@ -1065,6 +1231,172 @@ function mapAlertaTitulo(tipo){
     penhora_sem_extensao:'Penhora sem extensão definida'}[tipo]||(tipo?String(tipo).replace(/_/g,' '):'Alerta');
 }
 
+
+// ─── LEAN FORMAT HELPERS ─────────────────────────────────────────────────────────────
+// Converte string de fração ("1/4", "96800/1019896") em percentual numérico.
+function fracToPct(v, totalM2){
+  if(!v)return 0;
+  const s=String(v);
+  if(s.includes('/')){
+    const clean=s.replace(/\./g,'').replace(/,/g, '.');
+    const p=clean.split('/');
+    if(p.length===2){const n=parseFloat(p[0].trim()),d=parseFloat(p[1].trim());if(!isNaN(n)&&!isNaN(d)&&d>0)return(n/d)*100;}
+  }
+  if(totalM2>0 && /\d\s*ha\b|\bha\b|hectar|m2|m²/i.test(s)){
+     const valM2 = parseAreaToM2(s);
+     if(valM2>0) return (valM2 / totalM2) * 100;
+  }
+  return pctOf(v);
+}
+// Getters compatíveis com formatos antigo (transmitente/adquirente string) e novo (arrays)
+function actTrans(act){return Array.isArray(act.transmitentes)?act.transmitentes.filter(Boolean).join(', '):(act.transmitente||null);}
+function actAdq(act){
+  if(Array.isArray(act.adquirentes)&&act.adquirentes.length)return act.adquirentes.map(a=>typeof a==='string'?a:(a.nome||'')).filter(Boolean).join(', ');
+  return act.adquirente||null;
+}
+function actFrac(act){
+  if(Array.isArray(act.adquirentes)&&act.adquirentes.length===1&&act.adquirentes[0].fracao)return act.adquirentes[0].fracao;
+  return act.fracao||null;
+}
+// Reconstrói snapshot_proprietarios para cada ato via deltas. Retrocompatível.
+function rebuildSnapshots(data){
+  const chain=data.cadeia_possessoria||[];
+  const owners=new Map();
+  // Se existe adquirentes como array, é o formato novo (lean). Ignoramos qualquer snapshot alucinado pela IA.
+  chain.forEach(act=>{
+    // Lógica de delta e auto-healing aplicada incondicionalmente a todos os atos
+    const trans=Array.isArray(act.transmitentes)?act.transmitentes:(act.transmitente?[act.transmitente]:[]);
+    const adqs=Array.isArray(act.adquirentes)?act.adquirentes:(act.adquirente?[{nome:act.adquirente,fracao:act.fracao||''}]:[]);
+    const transP=Array.isArray(act.transmitentes_parciais)?act.transmitentes_parciais:[];
+    
+    let totalAdqPct=0;
+    const adqParsed=adqs.map(aqRaw=>{
+      const aq=typeof aqRaw==='string'?{nome:aqRaw,fracao:act.fracao||''}:aqRaw;
+      const pct=fracToPct(aq.fracao)||0;
+      totalAdqPct+=pct;
+      return {...aq, pct};
+    }).filter(a=>a.nome);
+
+    const allTransKeys=new Set();
+    trans.forEach(nm=>{if(nm)allTransKeys.add(nm.toLowerCase().trim());});
+    transP.forEach(t=>{if(t&&t.nome)allTransKeys.add(t.nome.toLowerCase().trim());});
+
+    if(totalAdqPct>0){
+      if(allTransKeys.size>0){
+        transP.forEach(t=>{
+          if(!t||!t.nome)return;
+          const key=t.nome.toLowerCase().trim();
+          if(owners.has(key)){
+            const ex=owners.get(key);
+            const newPct=fracToPct(t.fracao_restante);
+            if(newPct>=0){
+              const deduct=ex.percentual-newPct;
+              totalAdqPct-=deduct;
+              owners.set(key,{...ex,fracao:t.fracao_restante||ex.fracao,percentual:newPct});
+              allTransKeys.delete(key);
+            }
+          }
+        });
+        if(totalAdqPct>0.01 && allTransKeys.size>0){
+          let sumTransPct=0;
+          allTransKeys.forEach(k=>{if(owners.has(k))sumTransPct+=owners.get(k).percentual;});
+          if(sumTransPct>0){
+            const dedutivel=Math.min(sumTransPct,totalAdqPct);
+            allTransKeys.forEach(k=>{
+              if(!owners.has(k))return;
+              const ex=owners.get(k);
+              const shareOfSale=(ex.percentual/sumTransPct)*dedutivel;
+              const newPct=ex.percentual-shareOfSale;
+              if(newPct<0.5)owners.delete(k);
+              else owners.set(k,{...ex,fracao:'',percentual:newPct});
+            });
+            totalAdqPct-=dedutivel;
+          }
+        }
+      }
+      if(totalAdqPct>0.01 && owners.has('outros_proprietarios_anteriores')){
+        const out=owners.get('outros_proprietarios_anteriores');
+        const deduct=Math.min(out.percentual, totalAdqPct);
+        out.percentual-=deduct;
+        totalAdqPct-=deduct;
+        if(out.percentual<0.5)owners.delete('outros_proprietarios_anteriores');
+      }
+    } else if(trans.length>0 && totalAdqPct===0){
+      let freedPct=0;
+      trans.forEach(nm=>{
+        const key=(nm||'').toLowerCase().trim();
+        if(owners.has(key)){
+          freedPct+=owners.get(key).percentual;
+          owners.delete(key);
+        }
+      });
+      if(freedPct>0 && adqParsed.length>0){
+        const share=freedPct/adqParsed.length;
+        adqParsed.forEach(aq=>aq.pct=share);
+      }
+    }
+
+    if(owners.size===0 && trans.length===0 && totalAdqPct===0 && adqParsed.length>0){
+      const share=100/adqParsed.length;
+      adqParsed.forEach(aq=>aq.pct=share);
+    }
+
+    adqParsed.forEach(aq=>{
+      const key=aq.nome.toLowerCase().trim();
+      if(owners.has(key)){
+        const ex=owners.get(key);
+        owners.set(key,{...ex,fracao:aq.fracao||ex.fracao,percentual:ex.percentual+aq.pct});
+      } else {
+        owners.set(key,{nome:aq.nome,fracao:aq.fracao||'',percentual:aq.pct});
+      }
+    });
+
+    for(const [k,v] of owners.entries()){
+      if(v.percentual<0.5)owners.delete(k);
+    }
+
+    let actTotal=0;
+    for(const v of owners.values())actTotal+=v.percentual;
+    if(actTotal<99.5){
+      owners.set('outros_proprietarios_anteriores',{nome:'Outros proprietários (não extraídos)',fracao:'',percentual:100-actTotal});
+    }
+
+    act.snapshot_proprietarios=Array.from(owners.values()).map(o=>({...o}));
+  });
+}
+// Reconstrói onus_ativos para cada ato via onus_delta. Retrocompatível.
+function rebuildOnus(data){
+  const chain=data.cadeia_possessoria||[];
+  let active=[];
+  let hasOld=false;
+  chain.forEach(act=>{
+    const hasDelta=Array.isArray(act.onus_delta)&&act.onus_delta.length>0;
+    const hasStatic=Array.isArray(act.onus_ativos);
+    if(hasStatic&&!hasDelta){active=act.onus_ativos.filter(Boolean);hasOld=true;return;}
+    if(hasDelta){
+      act.onus_delta.forEach(({op,tipo,credor_beneficiario,fracao_atingida,descricao,id})=>{
+        const eid=id||(act.ato+'_'+(tipo||''));
+        if(op==='add')active.push({tipo:tipo||'outros',credor_beneficiario,fracao_atingida,descricao,_eid:eid});
+        else if(op==='remove'){
+          if(id)active=active.filter(o=>o._eid!==id);
+          else if(tipo&&credor_beneficiario)active=active.filter(o=>!(o.tipo===tipo&&o.credor_beneficiario===credor_beneficiario));
+          else if(tipo)active=active.filter(o=>o.tipo!==tipo);
+        }
+      });
+    }
+    if(!hasOld||hasDelta)act.onus_ativos=[...active];
+  });
+}
+// Enriquece proprietarios_atuais derivando percentual da fracao quando ausente.
+function enrichOwners(data){
+  const im=data.imovel||{};
+  const totalM2=parseAreaToM2(im.area_atual||im.area_original||'');
+  (data.proprietarios_atuais||[]).forEach(o=>{
+    if(o.percentual==null)o.percentual=fracToPct(o.fracao||'', totalM2);
+    (o.parcelas||[]).forEach(p=>{if(p.percentual_parcela==null)p.percentual_parcela=fracToPct(p.fracao_parcela||'', totalM2);});
+  });
+}
+
 // ─── CONTINUITY ENGINE ────────────────────────────────────────────────────────
 // Propaga a área vigente ato a ato e calcula a área de cada condômino (a IA não envia mais áreas no snapshot).
 function applyContinuity(data){
@@ -1086,8 +1418,20 @@ function applyContinuity(data){
                        !!(act.area_remanescente&&parseAreaToM2(act.area_remanescente)!==areaBeforeAct);
     act._area_snap_m2=isAreaChange?areaBeforeAct:curM2;
     (act.snapshot_proprietarios||[]).forEach(p=>{
+      const snapArea=act._area_snap_m2||0;
+      // Valida se a fração original escrita na matrícula pertence exatamente a esta era (pré ou pós-geo)
+      const exactM2=fracToM2(p.fracao,[snapArea]);
       const pct=pctOf(p.percentual);
-      if(pct>0&&act._area_snap_m2>0)p.area_calc=fmtArea(act._area_snap_m2*(pct/100));
+      if(exactM2>0&&snapArea>0){
+        p.area_calc=fmtArea(exactM2);
+        p._pct_corr=(exactM2/snapArea)*100;
+        p._fracao_corr=String(Math.round(exactM2))+'/'+String(Math.round(snapArea));
+      } else if(pct>0&&snapArea>0){
+        const ownerM2=snapArea*(pct/100);
+        p.area_calc=fmtArea(ownerM2);
+        p._pct_corr=pct;
+        p._fracao_corr=String(Math.round(ownerM2))+'/'+String(Math.round(snapArea));
+      }
     });
   });
   const finalM2=parseAreaToM2(im.area_atual||'')||curM2;
@@ -1111,6 +1455,9 @@ function renderAll(data,provLabel){
   hide('loadingS');
   gData=cleanData(data);
   gData._meta={provider:provLabel,analisado_em:new Date().toISOString()};
+  rebuildSnapshots(gData);
+  rebuildOnus(gData);
+  enrichOwners(gData);
   applyContinuity(gData);
   gDiag=runOfflineVerification(gData);
   gActIdx=-1;
@@ -1186,9 +1533,12 @@ function renderSmartAlerts(diag){
   const criticos=diag.filter(d=>d.sev==='er').slice(0,3);
   if(!criticos.length){el.innerHTML='';return;}
   el.innerHTML=`<div class="smart-alerts">${criticos.map(d=>`
-    <div class="sm-al alto">
-      <span style="flex-shrink:0"><i class="ph-fill ph-warning-circle" style="color:var(--er)"></i></span>
-      <span><strong>${h(d.titulo)}</strong>${d.ato?' <span class="sm-src">['+h(d.ato)+']</span>':''} — ${h(trunc(d.corpo,120))}</span>
+    <div class="sm-al alto" style="flex-direction: column; align-items: flex-start; padding-bottom: 8px;">
+      <div style="display: flex; gap: 10px; width: 100%;">
+        <span style="flex-shrink:0"><i class="ph-fill ph-warning-circle" style="color:var(--er)"></i></span>
+        <span><strong>${h(d.titulo)}</strong>${d.ato?' <span class="sm-src">['+h(d.ato)+']</span>':''} — ${h(d.corpo)}</span>
+      </div>
+      ${d.calc ? `<div style="margin-left: 28px; margin-top: 6px; font-family: monospace; font-size: 11px; color: var(--tx); opacity: 0.8; white-space: pre-wrap; background: rgba(0,0,0,0.03); padding: 6px 10px; border-radius: 4px;">${h(d.calc)}</div>` : ''}
     </div>`).join('')}</div>`;
 }
 
@@ -1302,7 +1652,21 @@ function renderOwners(owners){
   const grpCtl=document.getElementById('grpCtl');
   if(!owners.length){th.innerHTML='<th>#</th><th>Proprietário</th>';tb.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--tm)">Nenhum proprietário identificado</td></tr>`;grpCtl.style.display='none';return;}
   const total=owners.reduce((s,o)=>s+pctOf(o.percentual),0),okT=Math.abs(total-100)<0.5;
-  const totalsRow=(cols,note)=>`<tr class="totals-row"><td colspan="4" style="text-align:right;font-size:12px;color:var(--tm)">Total registrado</td><td><div class="pct-wrap"><div class="pct-bar"><div class="pct-fill" style="width:100%;background:var(--p)"></div></div><span class="pct-n" style="color:${okT?'var(--ok)':'var(--er)'}">${fmtPct(total)}</span></div></td><td colspan="${cols}"><span class="totals-note">${note}</span></td></tr>`;
+  const diff100=100-total;
+  let dynamicNote=null;
+  if(Math.abs(diff100)>0.001&&Math.abs(diff100)<=0.5){
+    const areaAtualNum=parseAreaToM2(gData?.imovel?.area_atual||gData?.imovel?.area_original||'');
+    const m2Diff=areaAtualNum>0?fmtArea(areaAtualNum*(Math.abs(diff100)/100)):'';
+    // Localiza se há atos específicos com parâmetros históricos
+    const atosHist=[];
+    (gDiag||[]).forEach(d=>{if(d.src&&d.src.includes('Auditoria de Convergência')&&d.ato)atosHist.push(d.ato);});
+    const atosRef=atosHist.length?` originada pontualmente em ${atosHist.join(', ')}`:'' ;
+    dynamicNote=`Diferença residual de ${diff100>0?'-':'+'}${Math.abs(diff100).toFixed(4)}%${m2Diff?` (~${m2Diff})`:''}${atosRef} (títulos posteriores com frações nominais pré-alteração de área). Regular perante o registro.`;
+  }
+  const hasDiscrepancy = Math.abs(100 - total) > 0.005;
+  const aiBtnHtml = hasDiscrepancy ? `<button class="btn btn-p sm btn-ai-discrepancy" style="margin-left:10px;padding:3px 9px;font-size:11.5px;" onclick="gerarParecerDiscrepanciaIA()"><i class="ph ph-sparkle"></i> Pedir Parecer à IA</button>` : '';
+  const totalsRow=(cols,note)=>`<tr class="totals-row"><td colspan="4" style="text-align:right;font-size:12px;color:var(--tm)">Total registrado</td><td><div class="pct-wrap"><div class="pct-bar"><div class="pct-fill" style="width:100%;background:var(--p)"></div></div><span class="pct-n" style="color:${okT?'var(--ok)':'var(--er)'}">${fmtPct(total)}</span></div></td><td colspan="${cols}"><span class="totals-note">${dynamicNote||note}</span>${aiBtnHtml}</td></tr>
+  ${hasDiscrepancy ? `<tr class="totals-ai-row"><td colspan="${cols+5}" style="padding:0 12px 10px 12px;"><div class="discrepancy-ai-result" style="display:none;"></div></td></tr>` : ''}`;
 
   if(gOwnerView==='group'){
     th.innerHTML=`<th>#</th><th>Unidade Familiar / Titular</th><th>CPF/CNPJ</th><th>Fração</th><th>%</th><th>Área</th><th>Natureza do Título</th><th>Ato(s)</th>`;
@@ -1460,7 +1824,8 @@ function selectAct(i){
     <span class="snap-nav"><button class="btn btn-g sm" ${i<=0?'disabled':''} onclick="selectAct(${i-1})" title="Ato anterior (←)">‹</button><button class="btn btn-g sm" ${i>=chain.length-1?'disabled':''} onclick="selectAct(${i+1})" title="Próximo ato (→)">›</button></span></div></div>`;
   if(act.resumo)x+=`<div class="snap-summary">${h(act.resumo)}</div>`;
   const meta=[];
-  if(act.transmitente||act.adquirente)meta.push(`<i class="ph ph-users"></i> ${act.transmitente?`<strong>${h(act.transmitente)}</strong> → `:''}<strong style="color:var(--p)">${h(act.adquirente)||'—'}</strong>${act.fracao?` <span class="hist-frac">${h(act.fracao)}</span>`:''}`);
+  const _tr=actTrans(act),_aq=actAdq(act),_fr=actFrac(act);
+  if(_tr||_aq)meta.push(`<i class="ph ph-users"></i> ${_tr?`<strong>${h(_tr)}</strong> → `:''}<strong style="color:var(--p)">${h(_aq)||'—'}</strong>${_fr?` <span class="hist-frac">${h(_fr)}</span>`:''}`);
   if(act.valor)meta.push(`<i class="ph ph-money"></i> <strong>Valor:</strong> ${h(act.valor)}`);
   const isAreaChangeAct=!!(act.evento_area&&act.evento_area.area_depois)||
                          !!(act.area_remanescente&&act._area_snap_m2!==act._area_m2);
@@ -1491,9 +1856,10 @@ function selectAct(i){
   const snap=act.snapshot_proprietarios||[];
   if(snap.length){
     x+=`<div class="snap-sec"><div class="snap-sec-t"><i class="ph ph-users"></i> Proprietários imediatamente após este ato</div><div class="snap-ow-rows">${snap.map((p,i2)=>{
-      const pct=pctOf(p.percentual),c=COLORS[i2%COLORS.length],ar=p.area_calc||p.area_correspondente||'';
+      const pct=p._pct_corr!=null?p._pct_corr:pctOf(p.percentual),c=COLORS[i2%COLORS.length],ar=p.area_calc||p.area_correspondente||'';
+      const fraDisp=p._fracao_corr||p.fracao;
       return `<div class="snap-ow" data-nm="${h(p.nome)}"><div class="snap-ow-top"><span class="snap-ow-name" style="color:${c}" title="${h(p.nome)}">${h(p.nome)||'—'}</span><div class="snap-ow-bw"><div class="snap-ow-bf" style="width:${Math.min(pct,100)}%;background:${c}"></div></div><span class="snap-ow-pct" style="color:${c}">${fmtPct(pct)}</span></div>
-        <div class="snap-ow-bottom"><span class="snap-ow-fr">${h(fmtFracao(p.fracao))}</span>${ar?`<span class="snap-ow-ar"><i class="ph ph-ruler"></i> ${h(ar)}${p.area_calc?' <span class="calc-mark">(calc.)</span>':''}</span>`:''}</div></div>`;
+        <div class="snap-ow-bottom"><span class="snap-ow-fr">${h(fmtFracao(fraDisp))}</span>${ar?`<span class="snap-ow-ar"><i class="ph ph-ruler"></i> ${h(ar)}${p.area_calc?' <span class="calc-mark">(calc.)</span>':''}</span>`:''}</div></div>`;
     }).join('')}</div></div>`;
   }
   const onus=act.onus_ativos||[];
@@ -1514,8 +1880,9 @@ function renderHist(chain){
     const cnTag=/cancel/.test((act.natureza||'').toLowerCase())?'<span class="tag-cn"><i class="ph-fill ph-check-circle" style="color:var(--ok)"></i> cancelamento</span>':'';
     const diagTags=actDiag.length?`<span class="tag-inf" onclick="switchTab('diag')"><i class="ph ph-microscope"></i> ${actDiag.length} alerta(s)</span>`:'';
     let parties='';
-    if(act.transmitente&&act.adquirente)parties=`<div class="hist-parties"><span class="hist-party">${h(act.transmitente)}</span><span class="hist-arr">→</span><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
-    else if(act.adquirente)parties=`<div class="hist-parties"><span class="hist-party" style="color:var(--p)">${h(act.adquirente)}</span>${act.fracao?`<span class="hist-frac">${h(act.fracao)}</span>`:''}</div>`;
+    const _htr=actTrans(act),_haq=actAdq(act),_hfr=actFrac(act);
+    if(_htr&&_haq)parties=`<div class="hist-parties"><span class="hist-party">${h(_htr)}</span><span class="hist-arr">→</span><span class="hist-party" style="color:var(--p)">${h(_haq)}</span>${_hfr?`<span class="hist-frac">${h(_hfr)}</span>`:''}</div>`;
+    else if(_haq)parties=`<div class="hist-parties"><span class="hist-party" style="color:var(--p)">${h(_haq)}</span>${_hfr?`<span class="hist-frac">${h(_hfr)}</span>`:''}</div>`;
     const tags=arTag+onTags+cnTag+diagTags;
     // Área exibida no histórico: ANTES da alteração para atos geo/retif, normal para demais
     const histIsChange=!!(act.evento_area&&act.evento_area.area_depois)||(act._area_snap_m2>0&&act._area_snap_m2!==act._area_m2);
@@ -1528,7 +1895,7 @@ function renderHist(chain){
       const aStr=act.area_remanescente||(act._area_snap_m2>0?fmtArea(act._area_snap_m2):'');
       if(aStr)areaHtml=`<div style="font-size:11px;color:var(--ac);margin-top:3px;font-weight:700"><i class="ph ph-ruler"></i> ${h(aStr)}</div>`;
     }
-    return `<div class="hist-it" data-nm="${h([act.transmitente,act.adquirente].filter(Boolean).join(' '))}">
+    return `<div class="hist-it" data-nm="${h([_htr,_haq].filter(Boolean).join(' '))}">
       <div class="hist-side" onclick="gotoAct('${h(act.ato)}')" title="Ver na linha do tempo"><div class="hist-ato" style="background:${col}">${h(act.ato)||'?'}</div><div class="hist-date">${h(act.data||'').replace(/\//g,'<br/>')}</div></div>
       <div class="hist-body"><div class="hist-nat">${h(act.natureza)||'—'}</div><div class="hist-sum">${h(act.resumo)}</div>${parties}${tags?`<div class="hist-tags">${tags}</div>`:''}
         ${areaHtml}
@@ -1678,57 +2045,56 @@ function hide(id){document.getElementById(id).style.display='none';}
 // Removidos (o JS deriva): parcelas.descricao, parcelas.motivo_comunicacao, snapshot.area_correspondente,
 // imovel.descricao, cadeia.ordem/tipo/percentual, proprietario.como_adquiriu/adquiriu_de.
 const PROMPT=`Você é especialista em Direito Imobiliário e análise de matrículas do Registro de Imóveis brasileiro.
-Analise COMPLETAMENTE a matrícula (todos os atos R e Av, em ordem) e retorne SOMENTE um JSON válido, sem markdown nem texto extra. Textos curtos. Use null para dado ausente; nunca invente. Omita campos opcionais vazios.
+Analise COMPLETAMENTE a matrícula (todos os atos R e Av, em ordem) e retorne SOMENTE um JSON válido, sem markdown nem texto extra. Use null para dado ausente; nunca invente. Omita campos opcionais quando vazios.
 
 {
-  "imovel": {"numero_matricula":"str","cartorio":"str","area_original":"ex: 101,9896 ha | null","area_atual":"ex: 98,4210 ha | null","localizacao":"endereço, município, UF"},
-  "proprietarios_atuais": [
+  "imovel":{"numero_matricula":"str","cartorio":"str","area_original":"ex: 101,9896 ha|null","area_atual":"ex: 102,1147 ha|null","localizacao":"município, UF"},
+  "proprietarios_atuais":[
     {
       "nome":"str","cpf_cnpj":"str|null",
-      "fracao":"fração TOTAL no imóvel, ex: 1/2","percentual":50.0,
-      "area_correspondente":"ex: 49,2105 ha | null",
-      "ato_referencia":"ex: R-5 ou R-3, R-7",
-      "conjuge":"nome completo | null",
-      "cpf_conjuge":"somente se constar na certidão (opcional)",
+      "fracao":"fração TOTAL ex: 1/2","area_correspondente":"str|null",
+      "ato_referencia":"ex: R-5",
+      "conjuge":"nome completo|null","cpf_conjuge":"str|null",
       "regime_bens":"comunhao_parcial|comunhao_universal|separacao_obrigatoria|separacao_convencional|participacao_final|desconhecido|null",
-      "parcelas":[{"fracao_parcela":"ex: 1/4","percentual_parcela":25.0,"area_parcela":"str|null","como_adquiriu":"compra_venda|heranca|doacao|usucapiao|adjudicacao|permuta|dacao_pagamento|arrematacao|partilha|outro","ato_parcela":"ex: R-3","comunica_conjuge":false}]
+      "parcelas":[{"fracao_parcela":"ex: 1/4","como_adquiriu":"compra_venda|heranca|doacao|usucapiao|adjudicacao|permuta|dacao_pagamento|arrematacao|partilha|outro","ato_parcela":"ex: R-3","comunica_conjuge":false}]
     }
   ],
-  "alertas":[{"tipo":"onus_vigente|lacuna_temporal|soma_incorreta|area_inconsistente|proprietario_sem_cpf|desmembramento_identificado|hipoteca_sem_fracao|heranca_sem_quinhao|penhora_sem_extensao|meacao_presumida","descricao":"1 frase citando o ato (ex: R-4)","criticidade":"alto|medio|info"}],
   "cadeia_possessoria":[
     {
       "ato":"R-1","data":"DD/MM/AAAA|null","natureza":"str",
-      "transmitente":"str|null","adquirente":"str|null","fracao":"str|null","valor":"str|null",
-      "resumo":"1 frase","area_remanescente":"área DESTA matrícula após o ato | null",
+      "transmitentes":["nome — omitir se vazio"],
+      "adquirentes":[{"nome":"str","fracao":"str"} — omitir se vazio],
+      "transmitentes_parciais":[{"nome":"str","fracao_restante":"str"} — omitir se vazio],
+      "valor":"str|null","resumo":"máx 6 palavras",
       "evento_area":null,
-      "onus_ativos":[],
-      "snapshot_proprietarios":[{"nome":"str","fracao":"str","percentual":100.0}]
+      "onus_delta":[]
     }
   ],
-  "score":{"valor":85,"categoria":"str","fatores_positivos":["máx 3 itens, até 5 palavras"],"fatores_negativos":["máx 3 itens, até 5 palavras"]},
-  "observacoes":"somente se houver algo relevante não coberto acima; senão omitir"
+  "alertas_ia":["máx 2 obs. que apenas leitura humana detecta; omitir se não houver"]
 }
 
 EVENTO_AREA (só quando o ato alterou a área física): {"tipo":"desmembramento|remembramento|retificacao|georreferenciamento|incorporacao|desapropriacao","descricao":"str","area_antes":"str","area_depois":"str","redistribuicao_especificada":true|false,"matriculas_relacionadas":["str"]}
-ONUS_ATIVOS = estado ACUMULADO dos ônus vigentes APÓS cada ato (repita os anteriores não cancelados): {"tipo":"hipoteca|penhora|usufruto|servidao|alienacao_fiduciaria|outros","credor_beneficiario":"str|null","fracao_atingida":"str|null","descricao":"str"}
 
-PARCELAS E MEAÇÃO (obrigatório): todo proprietário tem ≥ 1 parcela; uma por aquisição/natureza distinta; a soma dos percentual_parcela = percentual. Defina comunica_conjuge por estas regras:
-1. COMUNHÃO PARCIAL (padrão pós-1977 sem pacto): oneroso APÓS o casamento → true; gratuito (herança/doação/legado) → false; adquirido ANTES do casamento → false; sub-rogação de bem particular → false.
-2. COMUNHÃO UNIVERSAL: true, exceto cláusula expressa de incomunicabilidade → false.
+ONUS_DELTA (só quando o ato CRIA ou CANCELA um ônus): [{"op":"add"|"remove","tipo":"hipoteca|penhora|usufruto|servidao|alienacao_fiduciaria|outros","credor_beneficiario":"str|null","fracao_atingida":"str|null","descricao":"str","id":"id_curto_unico"}]
+— Para cancelamentos: op="remove" com o mesmo id do add original.
+
+PARCELAS E MEAÇÃO (obrigatório): todo proprietário tem ≥ 1 parcela. Regras comunica_conjuge:
+1. COMUNHÃO PARCIAL (pós-1977): oneroso pós-casamento → true; gratuito (herança/doação) → false; antes do casamento → false.
+2. COMUNHÃO UNIVERSAL: true, exceto incomunicabilidade expressa → false.
 3. SEPARAÇÃO (obrigatória/convencional): sempre false.
-4. PARTICIPAÇÃO FINAL NOS AQUESTOS: oneroso pós-casamento → true; gratuito → false.
-5. Se o ato dispuser diferente, prevalece o ato.
+4. PARTICIPAÇÃO FINAL: oneroso pós-casamento → true; gratuito → false.
+5. Prevalece o que o ato dispuser.
 
-CÔNJUGES (crítico): identifique casais pela qualificação ("e sua mulher", "casado com", "casados pelo regime"). Preencha conjuge com nome completo (null se solteiro/viúvo/divorciado). Deduza regime_bens pela data/lei quando não expresso. Se AMBOS os cônjuges são titulares atuais, preencha conjuge nos DOIS.
+CÔNJUGES (crítico): identifique pela qualificação ("e sua mulher", "casado com"). Preencha conjuge=nome completo (null se solteiro/viúvo/divorciado). Se ambos são titulares atuais, preencha conjuge nos DOIS.
 
 REGRAS:
 1. Todos os atos em ordem cronológica.
-2. proprietarios_atuais = SOMENTE donos atuais; soma dos percentuais = 100. Não liste "remanescente", "georreferenciamento" ou similares como proprietário.
-3. Herança: cada herdeiro individualmente com sua fração.
-4. snapshot_proprietarios = donos IMEDIATAMENTE APÓS o ato (soma 100). Não informe áreas no snapshot.
-5. redistribuicao_especificada = true só se o ato detalha como a variação se distribui entre condôminos.
-6. score.valor = 100 menos: ônus ativo -15; lacuna >15 anos -7; soma≠100 -20; transmitente inválido -20; penhora+venda -25.
-7. Inclua alerta meacao_presumida (info) quando o cônjuge presumivelmente tem direito mas não consta como titular.
+2. proprietarios_atuais = SOMENTE donos atuais. Não liste "remanescente", "georreferenciamento" ou similares.
+3. Herança: cada herdeiro individualmente.
+4. transmitentes = quem TRANSFERE a totalidade da sua fração. transmitentes_parciais = quem vende parte e mantém o resto (informe fracao_restante). adquirentes = quem recebe fração.
+5. redistribuicao_especificada = true só se o ato detalha como a variação distribui entre condôminos.
+6. ALTERAÇÃO DE ÁREA (CRÍTICO): após georreferenciamento ou retificação, atualize as frações dos adquirentes subsequentes com denominador na nova área. Nunca propague denominador defasado.
+7. alertas_ia: apenas observações que SOMENTE leitura humana detecta (ex: contradição narrativa entre atos, grafia de nome suspeita). Não repita o que regras matemáticas detectam.
 8. Retorne SOMENTE o JSON.`;
 
 syncUI();
