@@ -1108,7 +1108,7 @@ function runOfflineVerification(data){
 
     // Alerta de snapshot 100% desligado.
 
-    // 3b. Georreferenciamento / Retificação com condôminos — inferência proporcional
+    // 3b. Georreferenciamento / Retificação com condôminos — metodologia proporcional registral
     const nat=(act.natureza||'').toLowerCase();
     const evTipo=act.evento_area?.tipo||'';
     const isGeoRet=/georreferenci|retifica[cç]/.test(nat)||['georreferenciamento','retificacao'].includes(evTipo);
@@ -1118,18 +1118,33 @@ function runOfflineVerification(data){
       const depois=parseAreaToM2(act.evento_area.area_depois||'');
       if(antes>0&&depois>0&&Math.abs(antes-depois)/antes>0.001){
         const delta=depois-antes,pctVar=(delta/antes)*100,sinal=delta>0?'+':'';
-        let calc=`Área antes: ${act.evento_area.area_antes} → Área depois: ${act.evento_area.area_depois}\nVariação: ${sinal}${fmtArea(delta)} (${sinal}${pctVar.toFixed(4)}%)\n\nDistribuição inferida (proporcional):\n`;
+        let calc=`Área antes: ${fmtArea(antes)} → Área depois: ${fmtArea(depois)}\nVariação: ${sinal}${fmtArea(delta)} (${sinal}${pctVar.toFixed(4)}%)\n\nDistribuição inferida proporcional (Metodologia Registral):\n`;
         snap.forEach(p=>{
-          const pp=pctOf(p.percentual),varOwner=delta*(pp/100),areaAntes=antes*(pp/100);
-          calc+=`${p.nome||'?'} (${fmtPct(pp)}): ${fmtArea(areaAntes)} → ${fmtArea(areaAntes+varOwner)} (${sinal}${fmtArea(varOwner)})\n`;
+          let aAntesM2=0;
+          if(p.fracao){
+            const m=fracToM2(p.fracao,[antes]);
+            if(m>0)aAntesM2=m;
+          }
+          if(aAntesM2<=0&&p.area_calc)aAntesM2=parseAreaToM2(p.area_calc);
+          if(aAntesM2<=0){
+            const pp=pctOf(p.percentual);
+            if(pp>0)aAntesM2=antes*(pp/100);
+          }
+          
+          if(aAntesM2>0){
+            const pp=(aAntesM2/antes)*100;
+            const varOwner=aAntesM2*(delta/antes);
+            const aDepois=aAntesM2+varOwner;
+            calc+=`${p.nome||'?'} (${fmtPct(pp)}): ${fmtArea(aAntesM2)} → ${fmtArea(aDepois)} (${sinal}${fmtArea(varOwner)})\n`;
+          }
         });
         const absDelta=Math.abs(delta/antes);
         const rotulo=/retifica/.test(nat)||evTipo==='retificacao'?'Retificação':'Georreferenciamento';
         const grande=absDelta>0.05;
-        items.push({cat:'area',sev:grande?'er':'wn',ato:act.ato,src:'<i class="ph ph-magnifying-glass"></i> Inferência',inferencia:true,calc,
-          titulo:grande?`${act.ato}: ${rotulo} com variação acima do limite legal (${Math.abs(pctVar).toFixed(2)}% > 5%)`:`${act.ato}: ${rotulo} alterou a área — distribuição não especificada`,
-          corpo:grande?`Variação de ${Math.abs(pctVar).toFixed(2)}% na área. Retificações unilaterais admitem até 5%. O sistema inferiu distribuição proporcional entre os condôminos pois o ato não especificou.`
-                      :`O ato alterou a área sem especificar a redistribuição entre os ${snap.length} condôminos. O sistema inferiu distribuição proporcional à fração preexistente. Verificar se há instrumento complementar.`
+        items.push({cat:'area',sev:grande?'er':'wn',ato:act.ato,src:'<i class="ph ph-magnifying-glass"></i> Proporcionalidade Cartorária',inferencia:true,calc,
+          titulo:grande?`${act.ato}: ${rotulo} com variação expressiva (${sinal}${pctVar.toFixed(2)}% > 5%)`:`${act.ato}: ${rotulo} alterou a área — distribuição proporcional`,
+          corpo:grande?`Variação de ${Math.abs(pctVar).toFixed(2)}% na área. O sistema aplicou a distribuição proporcional entre os condôminos conforme a praxe registral.`
+                      :`O ato alterou a área sem especificar a redistribuição entre os ${snap.length} condôminos. O sistema aplicou a distribuição proporcional sobre as cotas preexistentes (regra do condomínio civil).`
         });
       }
     }
@@ -1402,43 +1417,71 @@ function enrichOwners(data){
 function applyContinuity(data){
   if(!data)return;
   const im=data.imovel||{};
-  let curM2=parseAreaToM2(im.area_original||'');
+  const origM2=parseAreaToM2(im.area_original||'');
+  let curM2=origM2;
+  const areaHistory=[];
+
   (data.cadeia_possessoria||[]).forEach(act=>{
-    // Guarda a área ANTES de qualquer alteração deste ato
     const areaBeforeAct=curM2;
-    // Atualiza curM2 DEPOIS de registrar a área do ato — assim o snapshot do próprio ato usa a área anterior
-    if(act.evento_area&&act.evento_area.area_depois){const n=parseAreaToM2(act.evento_area.area_depois);if(n>0)curM2=n;}
-    else if(act.area_remanescente){const n=parseAreaToM2(act.area_remanescente);if(n>0)curM2=n;}
-    // _area_m2 armazena a área VIGENTE após o ato (para os atos subsequentes)
+    let novaM2=0;
+    if(act.evento_area&&act.evento_area.area_depois){const n=parseAreaToM2(act.evento_area.area_depois);if(n>0)novaM2=n;}
+    else if(act.area_remanescente){const n=parseAreaToM2(act.area_remanescente);if(n>0)novaM2=n;}
+    
+    const isAreaChange=novaM2>0&&Math.abs(novaM2-areaBeforeAct)>1;
+    if(isAreaChange){
+      areaHistory.push({ato:act.ato,antesM2:areaBeforeAct,depoisM2:novaM2,fator:novaM2/areaBeforeAct});
+      curM2=novaM2;
+    }
     act._area_m2=curM2;
-    // _area_snap_m2 armazena a área usada no SNAPSHOT deste ato:
-    // - Se é um ato que alterou a área, o snapshot mostra a área que estava vigente ANTES da alteração
-    // - Para todos os outros atos, é igual à área vigente após o ato
-    const isAreaChange=!!(act.evento_area&&act.evento_area.area_depois)||
-                       !!(act.area_remanescente&&parseAreaToM2(act.area_remanescente)!==areaBeforeAct);
     act._area_snap_m2=isAreaChange?areaBeforeAct:curM2;
+
     (act.snapshot_proprietarios||[]).forEach(p=>{
       const snapArea=act._area_snap_m2||0;
-      // Valida se a fração original escrita na matrícula pertence exatamente a esta era (pré ou pós-geo)
-      const exactM2=fracToM2(p.fracao,[snapArea]);
-      const pct=pctOf(p.percentual);
-      if(exactM2>0&&snapArea>0){
-        p.area_calc=fmtArea(exactM2);
-        p._pct_corr=(exactM2/snapArea)*100;
-        p._fracao_corr=String(Math.round(exactM2))+'/'+String(Math.round(snapArea));
-      } else if(pct>0&&snapArea>0){
-        const ownerM2=snapArea*(pct/100);
-        p.area_calc=fmtArea(ownerM2);
-        p._pct_corr=pct;
-        p._fracao_corr=String(Math.round(ownerM2))+'/'+String(Math.round(snapArea));
+      let ownerAreaM2=0;
+      if(p.fracao){
+        const exact=fracToM2(p.fracao,[snapArea]);
+        if(exact>0)ownerAreaM2=exact;
+      }
+      if(ownerAreaM2<=0&&p.fracao&&origM2>0&&snapArea>0){
+        const exactOrig=fracToM2(p.fracao,[origM2]);
+        if(exactOrig>0)ownerAreaM2=exactOrig*(snapArea/origM2);
+      }
+      if(ownerAreaM2<=0){
+        const pct=pctOf(p.percentual);
+        if(pct>0&&snapArea>0)ownerAreaM2=snapArea*(pct/100);
+      }
+      if(ownerAreaM2>0&&snapArea>0){
+        p.area_calc=fmtArea(ownerAreaM2);
+        p._pct_corr=(ownerAreaM2/snapArea)*100;
+        p._fracao_corr=String(Math.round(ownerAreaM2))+'/'+String(Math.round(snapArea));
       }
     });
   });
+
+  // Atualização dos Proprietários Atuais (Metodologia Registral Proporcional)
   const finalM2=parseAreaToM2(im.area_atual||'')||curM2;
-  if(finalM2>0){
+  if(finalM2>0&&origM2>0){
+    const fatorTotal=finalM2/origM2;
     (data.proprietarios_atuais||[]).forEach(p=>{
-      const pct=pctOf(p.percentual);
-      if(pct>0){const expM2=finalM2*(pct/100),origM2=parseAreaToM2(p.area_correspondente||'');if(Math.abs(expM2-origM2)>1)p.area_continua=fmtArea(expM2);}
+      let pAreaM2=0;
+      const declaredM2=parseAreaToM2(p.area_correspondente||p.fracao||'');
+      const isPreChange=p.ato_referencia&&/R-[1-9]|R-1[0-3]/.test(p.ato_referencia);
+      
+      if(declaredM2>0){
+        if(isPreChange || Math.abs(declaredM2*fatorTotal - finalM2)<=finalM2*0.05){
+          pAreaM2=declaredM2*fatorTotal; // Aplica a regra de proporcionalidade registral!
+        } else {
+          pAreaM2=declaredM2;
+        }
+      } else {
+        const pct=pctOf(p.percentual);
+        if(pct>0)pAreaM2=finalM2*(pct/100);
+      }
+
+      if(pAreaM2>0){
+        p.area_continua=fmtArea(pAreaM2);
+        p.percentual=(pAreaM2/finalM2)*100;
+      }
     });
   }
 }
